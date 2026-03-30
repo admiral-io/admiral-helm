@@ -1,6 +1,7 @@
 apiVersion: v2
 name: admiral-agent
 description: Admiral agent for cluster registration and workload discovery
+icon: https://charts.admiral.io/logo.png
 
 # A chart can be either an 'application' or a 'library' chart.
 #

@@ -1,6 +1,7 @@
 apiVersion: v2
 name: admiral
 description: Admiral platform orchestrator for Kubernetes
+icon: https://charts.admiral.io/logo.png
 
 # A chart can be either an 'application' or a 'library' chart.
 #

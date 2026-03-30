@@ -1,6 +1,7 @@
 apiVersion: v2
 name: admiral-operator
 description: Admiral Kubernetes operator for managing deployments
+icon: https://charts.admiral.io/logo.png
 
 # A chart can be either an 'application' or a 'library' chart.
 #
