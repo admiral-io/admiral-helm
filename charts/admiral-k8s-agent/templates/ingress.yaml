@@ -2,9 +2,9 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: {{ include "admiral-operator.fullname" . }}
+  name: {{ include "admiral-k8s-agent.fullname" . }}
   labels:
-    {{- include "admiral-operator.labels" . | nindent 4 }}
+    {{- include "admiral-k8s-agent.labels" . | nindent 4 }}
   {{- with .Values.ingress.annotations }}
   annotations:
     {{- toYaml . | nindent 4 }}
@@ -35,7 +35,7 @@ spec:
             {{- end }}
             backend:
               service:
-                name: {{ include "admiral-operator.fullname" $ }}
+                name: {{ include "admiral-k8s-agent.fullname" $ }}
                 port:
                   number: {{ $.Values.service.port }}
           {{- end }}
