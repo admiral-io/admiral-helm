@@ -1,6 +1,6 @@
 apiVersion: v2
 name: admiral-agent
-description: A Helm chart for Kubernetes
+description: Admiral agent for cluster registration and workload discovery
 
 # A chart can be either an 'application' or a 'library' chart.
 #

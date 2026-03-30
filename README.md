@@ -12,9 +12,11 @@ helm repo add admiral https://charts.admiral.io
 
 The charts published currently by this repository are the following:
 
-| Chart name | Status | Remark |
-| ---------- | ------ | ------ |
-| -          | -      | -      |
+| Chart name | Status | Description |
+| ---------- | ------ | ----------- |
+| [admiral](charts/admiral) | Alpha | Admiral platform orchestrator for Kubernetes |
+| [admiral-agent](charts/admiral-agent) | Alpha | Admiral agent for cluster registration and workload discovery |
+| [admiral-operator](charts/admiral-operator) | Alpha | Admiral Kubernetes operator for managing deployments |
 
 ## Security Policy
 
