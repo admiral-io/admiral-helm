@@ -27,6 +27,17 @@ jobs:
         run: |
           git config user.name "$GITHUB_ACTOR"
           git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
+      - name: Add Helm repositories
+        run: |
+          helm repo add minio https://charts.min.io
+          helm repo update
+      - name: Build chart dependencies
+        run: |
+          for chart in charts/*/; do
+            if [ -f "$chart/Chart.lock" ]; then
+              helm dependency build "$chart"
+            fi
+          done
       - name: Prepare PGP key
         run: |
           IFS=""

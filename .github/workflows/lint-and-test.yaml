@@ -35,6 +35,10 @@ jobs:
       - name: Setup chart linting
         id: lint
         uses: helm/chart-testing-action@6ec842c01de15ebb84c8627d2744a0c2f2755c9f # v2.8.0
+      - name: Add Helm repositories
+        run: |
+          helm repo add minio https://charts.min.io
+          helm repo update
       - name: List changed charts
         id: list-changed
         run: |
