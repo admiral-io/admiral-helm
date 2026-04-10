@@ -2,6 +2,31 @@ apiVersion: v1
 entries:
   admiral:
   - apiVersion: v2
+    appVersion: v0.0.1
+    created: "2026-04-10T23:25:18.212222611Z"
+    dependencies:
+    - condition: postgresql.enabled
+      name: postgresql
+      repository: oci://registry-1.docker.io/bitnamicharts
+      version: 18.5.14
+    - condition: minio.enabled
+      name: minio
+      repository: https://charts.min.io
+      version: 5.4.0
+    description: Open source platform orchestrator that bridges IaC and app deployments.
+      Dependency graph across the full stack, environment-aware config, and deterministic
+      rollbacks.
+    digest: 4065185d6436a7134980fdba2e90bca2bd4afa9fad35c9dddebd49e11ba32a80
+    icon: https://charts.admiral.io/logo.png
+    maintainers:
+    - name: Admiral Contributors
+      url: https://github.com/admiral-io/admiral-helm
+    name: admiral
+    type: application
+    urls:
+    - https://github.com/admiral-io/admiral-helm/releases/download/admiral-0.3.0/admiral-0.3.0.tgz
+    version: 0.3.0
+  - apiVersion: v2
     appVersion: 1.16.0
     created: "2026-03-30T02:02:59.626419059Z"
     description: Admiral platform orchestrator for Kubernetes
@@ -13,6 +38,20 @@ entries:
     - https://github.com/admiral-io/admiral-helm/releases/download/admiral-0.1.0/admiral-0.1.0.tgz
     version: 0.1.0
   admiral-iac-agent:
+  - apiVersion: v2
+    appVersion: 1.16.0
+    created: "2026-04-10T23:25:18.378910487Z"
+    description: Connect infrastructure providers to the Admiral control plane
+    digest: 9903980f556be176a86a149796f7566684b582a92f4c333feb38d02950f532ea
+    icon: https://charts.admiral.io/logo.png
+    maintainers:
+    - name: Admiral Contributors
+      url: https://github.com/admiral-io/admiral-helm
+    name: admiral-iac-agent
+    type: application
+    urls:
+    - https://github.com/admiral-io/admiral-helm/releases/download/admiral-iac-agent-0.2.0/admiral-iac-agent-0.2.0.tgz
+    version: 0.2.0
   - apiVersion: v2
     appVersion: 1.16.0
     created: "2026-03-30T02:02:59.763599683Z"
@@ -27,6 +66,20 @@ entries:
   admiral-k8s-agent:
   - apiVersion: v2
     appVersion: 1.16.0
+    created: "2026-04-10T23:25:18.548191544Z"
+    description: Connect a Kubernetes cluster to the Admiral control plane
+    digest: a2d82cf58a13f5d5f2804089ac537298035829291cfec55d9134ff9864383075
+    icon: https://charts.admiral.io/logo.png
+    maintainers:
+    - name: Admiral Contributors
+      url: https://github.com/admiral-io/admiral-helm
+    name: admiral-k8s-agent
+    type: application
+    urls:
+    - https://github.com/admiral-io/admiral-helm/releases/download/admiral-k8s-agent-0.2.0/admiral-k8s-agent-0.2.0.tgz
+    version: 0.2.0
+  - apiVersion: v2
+    appVersion: 1.16.0
     created: "2026-03-30T02:02:59.904026693Z"
     description: Connect a Kubernetes cluster to the Admiral control plane
     digest: 5b4ccad3439fbc121d26740bcc771d42937b13b6e399eef2da5c3c41cfd742fc
@@ -36,4 +89,4 @@ entries:
     urls:
     - https://github.com/admiral-io/admiral-helm/releases/download/admiral-k8s-agent-0.1.0/admiral-k8s-agent-0.1.0.tgz
     version: 0.1.0
-generated: "2026-03-30T02:02:59.904030199Z"
+generated: "2026-04-10T23:25:18.548206773Z"
