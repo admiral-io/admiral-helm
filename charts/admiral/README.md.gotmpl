@@ -22,7 +22,8 @@ curl -sL https://raw.githubusercontent.com/admiral-io/admiral-helm/master/kind/c
 
 # Install ingress-nginx
 kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/kind/deploy.yaml
-kubectl wait --namespace ingress-nginx --for=condition=ready pod --selector=app.kubernetes.io/component=controller --timeout=120s
+
+kubectl rollout status deployment ingress-nginx-controller --namespace ingress-nginx --timeout=120s
 
 # Add the Admiral Helm repository
 helm repo add admiral https://charts.admiral.io
