@@ -1,0 +1,17 @@
+{{- if and .Values.dex.enabled .Values.dex.pdb.create }}
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ include "admiral.dex.fullname" . }}
+  labels:
+    {{- include "admiral.dex.labels" . | nindent 4 }}
+spec:
+  {{- if .Values.dex.pdb.maxUnavailable }}
+  maxUnavailable: {{ .Values.dex.pdb.maxUnavailable }}
+  {{- else }}
+  minAvailable: {{ .Values.dex.pdb.minAvailable | default 0 }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "admiral.dex.selectorLabels" . | nindent 6 }}
+{{- end }}

@@ -1,0 +1,90 @@
+# values/kind.yaml
+# Complete demo preset for local KinD evaluation.
+# Usage: helm install admiral charts/admiral -f values/kind.yaml
+#
+# Prerequisites:
+#   kind create cluster --config kind/cluster.yaml
+#   kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/kind/deploy.yaml
+#
+# Or simply: make dev
+
+# --- Ingress ---
+ingress:
+  enabled: true
+  className: nginx
+  host: admiral.127.0.0.1.nip.io
+  tls:
+    enabled: false
+
+# --- Server ---
+server:
+  logLevel: debug
+  enablePprof: true
+
+# --- Database (built-in PostgreSQL) ---
+postgresql:
+  enabled: true
+  auth:
+    database: admiral
+    username: admiral
+    password: "shipitnow"
+  primary:
+    resources:
+      requests:
+        cpu: 50m
+        memory: 64Mi
+      limits:
+        memory: 256Mi
+    persistence:
+      size: 512Mi
+
+# --- Object Storage (built-in MinIO) ---
+minio:
+  enabled: true
+  mode: standalone
+  replicas: 1
+  rootUser: "admiral"
+  rootPassword: "shipitnow"
+  buckets:
+    - name: manifests
+      policy: none
+      purge: false
+    - name: revisions
+      policy: none
+      purge: false
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      memory: 256Mi
+  persistence:
+    size: 512Mi
+
+objectStorage:
+  type: s3
+
+# --- OIDC (built-in Dex) ---
+oauth2:
+  demoPassword: "shipitnow"
+
+dex:
+  enabled: true
+  resources:
+    requests:
+      cpu: 25m
+      memory: 32Mi
+    limits:
+      memory: 128Mi
+
+# --- Migrations ---
+migrations:
+  mode: hook
+
+# --- Admiral Server (conservative for laptop) ---
+resources:
+  requests:
+    cpu: 50m
+    memory: 64Mi
+  limits:
+    memory: 256Mi

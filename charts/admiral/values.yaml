@@ -1,46 +1,188 @@
 # Default values for admiral.
 # This is a YAML-formatted file.
-# Declare variables to be passed into your templates.
 
-# This will set the replicaset count more information can be found here: https://kubernetes.io/docs/concepts/workloads/controllers/replicaset/
+# -- Number of replicas for the admiral server deployment
 replicaCount: 1
 
-# This sets the container image more information can be found here: https://kubernetes.io/docs/concepts/containers/images/
+# -- Container image configuration
 image:
-  repository: nginx
-  # This sets the pull policy for images.
+  # -- Image repository
+  repository: ghcr.io/admiral-io/admiral-server
+  # -- Image pull policy
   pullPolicy: IfNotPresent
-  # Overrides the image tag whose default is the chart appVersion.
+  # -- Overrides the image tag whose default is the chart appVersion
   tag: ""
 
-# This is for the secrets for pulling an image from a private repository more information can be found here: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
+# -- Image pull secrets for private registries
 imagePullSecrets: []
-# This is to override the chart name.
+# -- Override the chart name
 nameOverride: ""
+# -- Override the full release name
 fullnameOverride: ""
 
-# This section builds out the service account more information can be found here: https://kubernetes.io/docs/concepts/security/service-accounts/
+# =============================================================================
+# Server Configuration
+# =============================================================================
+
+# -- Admiral server configuration
+server:
+  # -- Server listen port
+  port: 8080
+  # -- Log level (debug, info, warn, error)
+  logLevel: error
+  # -- Enable pprof profiling endpoint
+  enablePprof: false
+  # -- Access log configuration
+  accessLog:
+    # -- gRPC status code filters
+    statusCodeFilters: [2, 4, 12, 14]
+  # -- Server timeout configuration
+  timeouts:
+    # -- Default request timeout
+    default: 15s
+  # -- Stats/metrics configuration
+  stats:
+    # -- Metrics flush interval
+    flushInterval: 1s
+    # -- Go runtime stats collection interval
+    goRuntimeCollectionInterval: 5s
+    # -- Reporter type (prometheus)
+    reporterType: prometheus
+
+# -- OAuth2/OIDC configuration for the admiral server
+oauth2:
+  # -- Provider name (dex, keycloak, okta, etc.)
+  name: dex
+  # -- OIDC issuer URL. Auto-computed when dex.enabled=true.
+  issuer: ""
+  # -- OIDC client ID
+  clientId: admiral
+  # -- OIDC scopes (comma-separated)
+  scopes: "openid,offline_access,email,profile"
+  # -- OAuth2 redirect URL. Auto-computed from ingress.host if empty.
+  redirectUrl: ""
+  # -- Refresh token TTL
+  refreshTokenTTL: 12h
+  # -- Name of existing secret containing OAuth2 credentials.
+  # Must contain keys specified by clientSecretKey and signingSecretKey.
+  existingSecret: ""
+  # -- Key in existingSecret for the client secret
+  clientSecretKey: client-secret
+  # -- Key in existingSecret for the signing secret
+  signingSecretKey: signing-secret
+  # -- OAuth2 client secret (auto-generated in demo mode if empty)
+  clientSecret: ""
+  # -- OAuth2 signing secret (auto-generated in demo mode if empty)
+  signingSecret: ""
+  # -- Demo user password for Dex (auto-generated if empty and dex.enabled)
+  demoPassword: ""
+
+# -- Session management configuration
+session:
+  # -- Session idle timeout
+  idleTimeout: 30m
+  # -- Session lifetime
+  lifetime: 24h
+  # -- Cookie settings
+  cookie:
+    # -- Cookie name
+    name: session
+    # -- Cookie domain (empty = auto)
+    domain: ""
+    # -- HTTP-only flag
+    httpOnly: true
+    # -- SameSite attribute (strict, lax, none)
+    sameSite: lax
+    # -- Secure flag (set to true when using TLS)
+    secure: false
+    # -- Persist sessions across browser restarts
+    persist: true
+
+# -- Object storage configuration
+objectStorage:
+  # -- Storage type: s3 (includes MinIO) or gcs
+  type: s3
+  # -- S3/MinIO configuration
+  s3:
+    # -- S3 endpoint URL. Auto-computed from MinIO subchart when minio.enabled=true.
+    endpoint: ""
+    # -- S3 region
+    region: us-east-1
+    # -- Use SSL for S3 connections
+    useSSL: false
+    # -- Name of existing secret containing S3 credentials.
+    # Auto-computed from MinIO subchart when minio.enabled=true.
+    existingSecret: ""
+    # -- Key in secret for access key
+    accessKeyKey: rootUser
+    # -- Key in secret for secret key
+    secretKeyKey: rootPassword
+  # -- GCS configuration
+  gcs:
+    # -- GCP project ID
+    projectId: ""
+    # -- Name of existing secret containing GCS service account key JSON
+    existingSecret: ""
+    # -- Key in secret for the credentials JSON
+    secretKey: credentials-json
+
+# -- Bucket names for admiral services
+buckets:
+  # -- Bucket name for manifests
+  manifests: manifests
+  # -- Bucket name for revisions
+  revisions: revisions
+
+# =============================================================================
+# Database Migrations
+# =============================================================================
+
+# -- Migration job configuration
+migrations:
+  # -- Migration mode: hook (pre-install/pre-upgrade), job (manual), skip (disabled)
+  mode: hook
+  # -- Migration container image (defaults to main app image if empty)
+  image:
+    repository: ""
+    tag: ""
+  # -- Migration args (passed to the container entrypoint /app/admiral-server)
+  args: ["--config", "/etc/admiral/config.yaml", "migrate", "--force"]
+  # -- Resource requests/limits for migration job
+  resources: {}
+
+# =============================================================================
+# ServiceAccount
+# =============================================================================
+
+# -- Service account configuration
 serviceAccount:
-  # Specifies whether a service account should be created.
+  # -- Create a service account
   create: true
-  # Automatically mount a ServiceAccount's API credentials?
+  # -- Automatically mount the service account token
   automount: true
-  # Annotations to add to the service account.
+  # -- Annotations to add to the service account.
+  # Use for Workload Identity (GKE) or IRSA (EKS):
+  #   iam.gke.io/gcp-service-account: "sa@project.iam.gserviceaccount.com"
+  #   eks.amazonaws.com/role-arn: "arn:aws:iam::123456789:role/my-role"
   annotations: {}
-  # The name of the service account to use.
+  # -- The name of the service account to use.
   # If not set and create is true, a name is generated using the fullname template.
   name: ""
 
-# This is for setting Kubernetes Annotations to a Pod.
-# For more information checkout: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations/
+# =============================================================================
+# Pod Configuration
+# =============================================================================
+
+# -- Annotations to add to pods
 podAnnotations: {}
-# This is for setting Kubernetes Labels to a Pod.
-# For more information checkout: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/
+# -- Labels to add to pods
 podLabels: {}
 
+# -- Pod security context
 podSecurityContext: {}
   # fsGroup: 2000
 
+# -- Container security context
 securityContext: {}
   # capabilities:
   #   drop:
@@ -49,73 +191,71 @@ securityContext: {}
   # runAsNonRoot: true
   # runAsUser: 1000
 
-# This is for setting up a service more information can be found here: https://kubernetes.io/docs/concepts/services-networking/service/
+# =============================================================================
+# Service
+# =============================================================================
+
+# -- Service configuration
 service:
-  # This sets the service type more information can be found here: https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services-service-types
+  # -- Service type
   type: ClusterIP
-  # This sets the ports more information can be found here: https://kubernetes.io/docs/concepts/services-networking/service/#field-spec-ports
+  # -- Service port
   port: 80
 
-# This block is for setting up the ingress for more information can be found here: https://kubernetes.io/docs/concepts/services-networking/ingress/
+# =============================================================================
+# Ingress (simplified single-host model)
+# =============================================================================
+
+# -- Ingress configuration
 ingress:
+  # -- Enable ingress
   enabled: false
+  # -- Ingress class name
   className: ""
+  # -- Ingress hostname. Used for nip.io in KinD demo.
+  host: admiral.127.0.0.1.nip.io
+  # -- Ingress annotations
   annotations: {}
-    # kubernetes.io/ingress.class: nginx
-    # kubernetes.io/tls-acme: "true"
-  hosts:
-    - host: chart-example.local
-      paths:
-        - path: /
-          pathType: ImplementationSpecific
-  tls: []
-    # - secretName: chart-example-tls
-    #   hosts:
-    #     - chart-example.local
+  # -- TLS configuration
+  tls:
+    # -- Enable TLS
+    enabled: false
+    # -- Name of existing TLS secret
+    secretName: ""
 
-# -- Expose the service via gateway-api HTTPRoute
-# Requires Gateway API resources and suitable controller installed within the cluster
-# (see: https://gateway-api.sigs.k8s.io/guides/)
+# =============================================================================
+# HTTPRoute (Gateway API)
+# =============================================================================
+
+# -- Gateway API HTTPRoute configuration.
+# Requires Gateway API CRDs and a suitable controller installed in the cluster.
+# @default -- See values below
 httpRoute:
-  # HTTPRoute enabled.
+  # -- Enable HTTPRoute
   enabled: false
-  # HTTPRoute annotations.
+  # -- HTTPRoute annotations
   annotations: {}
-  # Which Gateways this Route is attached to.
+  # -- Gateway parent references
   parentRefs:
-  - name: gateway
-    sectionName: http
-    # namespace: default
-  # Hostnames matching HTTP header.
+    - name: gateway
+      sectionName: http
+      # namespace: default
+  # -- Hostnames for HTTP header matching
   hostnames:
-  - chart-example.local
-  # List of rules and filters applied.
+    - admiral.example.com
+  # -- Routing rules and filters
   rules:
-  - matches:
-    - path:
-        type: PathPrefix
-        value: /headers
-  #   filters:
-  #   - type: RequestHeaderModifier
-  #     requestHeaderModifier:
-  #       set:
-  #       - name: My-Overwrite-Header
-  #         value: this-is-the-only-value
-  #       remove:
-  #       - User-Agent
-  # - matches:
-  #   - path:
-  #       type: PathPrefix
-  #       value: /echo
-  #     headers:
-  #     - name: version
-  #       value: v2
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /
 
+# =============================================================================
+# Resources & Probes
+# =============================================================================
+
+# -- Resource requests/limits for the admiral server
 resources: {}
-  # We usually recommend not to specify default resources and to leave this as a conscious
-  # choice for the user. This also increases chances charts run on environments with little
-  # resources, such as Minikube. If you do want to specify resources, uncomment the following
-  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
   # limits:
   #   cpu: 100m
   #   memory: 128Mi
@@ -123,39 +263,279 @@ resources: {}
   #   cpu: 100m
   #   memory: 128Mi
 
-# This is to setup the liveness and readiness probes more information can be found here: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/
+# -- Liveness probe configuration
 livenessProbe:
   httpGet:
-    path: /
+    path: /healthz
     port: http
+  initialDelaySeconds: 10
+  periodSeconds: 10
+
+# -- Readiness probe configuration
 readinessProbe:
   httpGet:
-    path: /
+    path: /readyz
     port: http
+  initialDelaySeconds: 5
+  periodSeconds: 5
 
-# This section is for setting up autoscaling more information can be found here: https://kubernetes.io/docs/concepts/workloads/autoscaling/
+# =============================================================================
+# Autoscaling
+# =============================================================================
+
+# -- Horizontal Pod Autoscaler configuration
 autoscaling:
+  # -- Enable HPA
   enabled: false
+  # -- Minimum replicas
   minReplicas: 1
+  # -- Maximum replicas
   maxReplicas: 100
+  # -- Target CPU utilization percentage
   targetCPUUtilizationPercentage: 80
   # targetMemoryUtilizationPercentage: 80
 
-# Additional volumes on the output Deployment definition.
-volumes: []
-  # - name: foo
-  #   secret:
-  #     secretName: mysecret
-  #     optional: false
+# =============================================================================
+# Pod Disruption Budget
+# =============================================================================
 
-# Additional volumeMounts on the output Deployment definition.
-volumeMounts: []
-  # - name: foo
-  #   mountPath: "/etc/foo"
-  #   readOnly: true
+# -- Pod Disruption Budget for the admiral server (Bitnami convention)
+pdb:
+  # -- Create a PDB resource
+  create: false
+  # -- Minimum number of available pods
+  minAvailable: ""
+  # -- Maximum number of unavailable pods
+  maxUnavailable: ""
 
+# =============================================================================
+# Network Policy
+# =============================================================================
+
+# -- Network Policy configuration (Bitnami convention)
+networkPolicy:
+  # -- Enable NetworkPolicy
+  enabled: false
+  # -- Allow connections from outside the cluster
+  allowExternal: true
+  # -- Allow outbound connections to any destination
+  allowExternalEgress: true
+  # -- Additional ingress rules
+  extraIngress: []
+  # -- Additional egress rules
+  extraEgress: []
+
+# =============================================================================
+# Prometheus Metrics / ServiceMonitor
+# =============================================================================
+
+# -- Metrics and monitoring configuration
+metrics:
+  # -- Enable metrics exposure
+  enabled: false
+  # -- Prometheus ServiceMonitor configuration
+  serviceMonitor:
+    # -- Create a ServiceMonitor resource (requires Prometheus Operator)
+    enabled: false
+    # -- Namespace for the ServiceMonitor (defaults to release namespace)
+    namespace: ""
+    # -- Scrape interval
+    interval: 30s
+    # -- Scrape timeout
+    scrapeTimeout: ""
+    # -- Additional labels for the ServiceMonitor
+    labels: {}
+    # -- Honor labels from the target
+    honorLabels: false
+    # -- Relabeling rules
+    relabelings: []
+    # -- Metric relabeling rules
+    metricRelabelings: []
+
+# =============================================================================
+# Extensibility (Bitnami naming convention)
+# =============================================================================
+
+# -- Extra environment variables for the admiral server container
+extraEnvVars: []
+  # - name: CUSTOM_VAR
+  #   value: "custom-value"
+
+# -- Name of a ConfigMap containing extra environment variables
+extraEnvVarsCM: ""
+
+# -- Name of a Secret containing extra environment variables
+extraEnvVarsSecret: ""
+
+# -- Extra volumes for the admiral server pod
+extraVolumes: []
+
+# -- Extra volume mounts for the admiral server container
+extraVolumeMounts: []
+
+# -- Extra init containers for the admiral server pod
+initContainers: []
+
+# -- Extra sidecar containers for the admiral server pod
+sidecars: []
+
+# =============================================================================
+# Scheduling
+# =============================================================================
+
+# -- Node selector for pod assignment
 nodeSelector: {}
 
+# -- Tolerations for pod assignment
 tolerations: []
 
+# -- Affinity rules for pod assignment
 affinity: {}
+
+# =============================================================================
+# Database — PostgreSQL
+# =============================================================================
+
+# -- PostgreSQL subchart configuration
+# @default -- See subchart values
+postgresql:
+  # -- Deploy PostgreSQL subchart. Set to false to use an external database.
+  enabled: false
+  auth:
+    # -- Database name
+    database: admiral
+    # -- Database user
+    username: admiral
+    # -- Database password (auto-generated if empty)
+    password: ""
+    # -- Name of existing secret containing the database password.
+    # Key must be `password` for the user and `postgres-password` for the admin.
+    existingSecret: ""
+  primary:
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+    persistence:
+      # -- Enable persistence using PVC
+      enabled: true
+      # -- PVC size for PostgreSQL data
+      size: 1Gi
+      # -- Storage class name. Leave empty for cluster default.
+      storageClass: ""
+      # -- Use an existing PVC instead of creating one
+      existingClaim: ""
+
+# -- External database configuration (used when postgresql.enabled=false)
+# Pattern: Bitnami Gitea/Airflow
+externalDatabase:
+  # -- External database host
+  host: ""
+  # -- External database port
+  port: 5432
+  # -- External database name
+  database: admiral
+  # -- External database user
+  username: admiral
+  # -- External database password (ignored if existingSecret is set)
+  password: ""
+  # -- SSL mode for external database connection
+  sslMode: disable
+  # -- Name of existing secret containing the database password
+  existingSecret: ""
+  # -- Key within the existing secret containing the password
+  existingSecretPasswordKey: db-password
+
+# =============================================================================
+# Object Storage — MinIO
+# =============================================================================
+
+# -- MinIO subchart configuration (official minio/minio chart)
+# @default -- See subchart values
+minio:
+  # -- Deploy MinIO subchart. Set to false to use external object storage.
+  enabled: false
+  # -- MinIO mode (standalone for demo, distributed for production)
+  mode: standalone
+  # -- MinIO root user
+  rootUser: "admiral"
+  # -- MinIO root password (auto-generated if empty)
+  rootPassword: ""
+  # -- Name of existing secret with rootUser and rootPassword keys
+  existingSecret: ""
+  # -- Buckets to create on startup
+  buckets:
+    - name: manifests
+      policy: none
+      purge: false
+    - name: revisions
+      policy: none
+      purge: false
+  # -- Number of replicas (1 for standalone)
+  replicas: 1
+  # -- Resource requests/limits
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+  # -- Persistence configuration
+  persistence:
+    enabled: true
+    # -- PVC size for MinIO data
+    size: 1Gi
+    # -- Storage class name. Leave empty for cluster default.
+    storageClass: ""
+    # -- Use an existing PVC instead of creating one
+    existingClaim: ""
+
+# =============================================================================
+# OIDC / Dex (built-in, following Argo CD pattern)
+# =============================================================================
+
+# -- Dex OIDC provider configuration.
+# Deployed as built-in templates (not a subchart) for full config control.
+dex:
+  # -- Deploy Dex. Set to false to use an external OIDC provider.
+  enabled: false
+  # -- Dex container image
+  image:
+    repository: ghcr.io/dexidp/dex
+    tag: latest
+    pullPolicy: IfNotPresent
+  # -- Dex configuration. Rendered as a ConfigMap.
+  # staticClients and staticPasswords are auto-managed by chart templates.
+  config:
+    # -- Issuer URL. Auto-computed from ingress.host if empty.
+    issuer: ""
+    storage:
+      type: kubernetes
+      config:
+        inCluster: true
+    web:
+      http: 0.0.0.0:5556
+    enablePasswordDB: true
+  # -- Dex service configuration
+  service:
+    port: 5556
+  # -- Resource requests/limits for Dex
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+  # -- Extra environment variables for Dex pod
+  extraEnvVars: []
+  # -- Extra volume mounts for Dex container
+  extraVolumeMounts: []
+  # -- Extra volumes for Dex pod
+  extraVolumes: []
+  # -- Pod Disruption Budget for Dex
+  pdb:
+    # -- Create a PDB for Dex
+    create: false
+    minAvailable: ""
+    maxUnavailable: ""
+  # -- Dex service account
+  serviceAccount:
+    # -- Create a service account for Dex
+    create: true
+    annotations: {}

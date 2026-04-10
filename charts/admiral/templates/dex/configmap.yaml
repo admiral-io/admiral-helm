@@ -1,0 +1,33 @@
+{{- if .Values.dex.enabled }}
+{{- $issuer := include "admiral.dex.issuer" . }}
+{{- $redirectUrl := include "admiral.oauth2.redirectUrl" . }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "admiral.dex.fullname" . }}
+  labels:
+    {{- include "admiral.dex.labels" . | nindent 4 }}
+data:
+  config.yaml: |
+    issuer: {{ $issuer }}
+    storage:
+      {{- toYaml .Values.dex.config.storage | nindent 6 }}
+    web:
+      {{- toYaml .Values.dex.config.web | nindent 6 }}
+    staticClients:
+      - id: {{ .Values.oauth2.clientId }}
+        name: Admiral
+        secretEnv: OAUTH2_CLIENT_SECRET
+        redirectURIs:
+          - {{ $redirectUrl }}
+    oauth2:
+      skipApprovalScreen: true
+    enablePasswordDB: {{ .Values.dex.config.enablePasswordDB }}
+    {{- if .Values.dex.config.enablePasswordDB }}
+    staticPasswords:
+      - email: admin@example.com
+        hashFromEnv: DEX_DEMO_PASSWORD
+        username: admin
+        userID: "08a8684b-db88-4b73-90a9-3cd1661f5466"
+    {{- end }}
+{{- end }}

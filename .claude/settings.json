@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__go-dev-mcp__get_github_content",
+      "WebFetch(domain:github.com)",
+      "mcp__go-dev-mcp__search_github_code",
+      "mcp__go-dev-mcp__search_within_godoc",
+      "WebSearch",
+      "Bash(curl -s https://raw.githubusercontent.com/argoproj/argo-helm/main/charts/argo-cd/values.yaml)",
+      "Bash(curl -s https://api.github.com/repos/argoproj/argo-helm/contents/charts/argo-cd/templates)",
+      "Bash(curl -s https://raw.githubusercontent.com/argoproj/argo-helm/main/charts/argo-cd/NOTES.txt)",
+      "mcp__go-dev-mcp__tree_github_repo",
+      "Bash(curl -s \"https://api.github.com/repos/argoproj/argo-helm/git/trees/main?recursive=1\")",
+      "Bash(curl -s https://raw.githubusercontent.com/argoproj/argo-helm/main/charts/argo-cd/templates/argocd-configs/argocd-secret.yaml)",
+      "Bash(curl -s https://raw.githubusercontent.com/argoproj/argo-helm/main/charts/argo-cd/templates/_helpers.tpl)",
+      "Bash(curl -s https://raw.githubusercontent.com/argoproj/argo-helm/main/charts/argo-cd/templates/_common.tpl)",
+      "Bash(kubectl logs:*)",
+      "Bash(kubectl get:*)"
+    ]
+  }
+}

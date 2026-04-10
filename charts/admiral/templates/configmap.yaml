@@ -1,0 +1,74 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "admiral.fullname" . }}
+  labels:
+    {{- include "admiral.labels" . | nindent 4 }}
+data:
+  config.yaml: |
+    server:
+      listener:
+        address: 0.0.0.0
+        port: {{ .Values.server.port }}
+      timeouts:
+        default: {{ .Values.server.timeouts.default }}
+      logger:
+        level: ${LOGGER_LEVEL}
+      access_log:
+        status_code_filters:
+          {{- range .Values.server.accessLog.statusCodeFilters }}
+          - {{ . }}
+          {{- end }}
+      enable_pprof: {{ .Values.server.enablePprof }}
+      stats:
+        flush_interval: {{ .Values.server.stats.flushInterval }}
+        go_runtime_stats:
+          collection_interval: {{ .Values.server.stats.goRuntimeCollectionInterval }}
+        reporter_type: {{ .Values.server.stats.reporterType }}
+    endpoints:
+      manifest:
+        bucket_name: ${MANIFEST_BUCKET_NAME}
+      revision:
+        bucket_name: ${REVISION_BUCKET_NAME}
+    services:
+      authn:
+        name: ${OAUTH2_NAME}
+        issuer: ${OAUTH2_ISSUER}
+        client_id: ${OAUTH2_CLIENT_ID}
+        client_secret: ${OAUTH2_CLIENT_SECRET}
+        scopes: ${OAUTH2_SCOPES}
+        redirect_url: ${OAUTH2_REDIRECT_URL}
+        signing_secret: ${OAUTH2_SIGNING_SECRET}
+        refresh_token_ttl: ${OAUTH2_REFRESH_TOKEN_TTL}
+      database:
+        host: ${DATABASE_HOST}
+        port: ${DATABASE_PORT}
+        database_name: ${DATABASE_NAME}
+        user: ${DATABASE_USER}
+        password: ${DATABASE_PASSWORD}
+        ssl_mode: ${DATABASE_SSL_MODE}
+      object_storage:
+        type: ${STORAGE_TYPE}
+        {{- if eq .Values.objectStorage.type "s3" }}
+        s3:
+          endpoint: ${STORAGE_ENDPOINT}
+          region: ${STORAGE_REGION}
+          use_ssl: ${STORAGE_USE_SSL}
+          access_key: ${STORAGE_ACCESS_KEY}
+          secret_key: ${STORAGE_SECRET_KEY}
+        {{- end }}
+        {{- if eq .Values.objectStorage.type "gcs" }}
+        gcs:
+          credentials_json: ${GCS_CREDENTIALS_JSON}
+          project_id: ${GCS_PROJECT_ID}
+        {{- end }}
+      session:
+        idle_timeout: ${SESSION_IDLE_TIMEOUT}
+        lifetime: ${SESSION_LIFETIME}
+        cookie:
+          name: ${SESSION_COOKIE_NAME}
+          domain: ${SESSION_COOKIE_DOMAIN}
+          http_only: ${SESSION_COOKIE_HTTP_ONLY}
+          same_site: ${SESSION_COOKIE_SAME_SITE}
+          secure: ${SESSION_COOKIE_SECURE}
+          persist: ${SESSION_COOKIE_PERSIST}
