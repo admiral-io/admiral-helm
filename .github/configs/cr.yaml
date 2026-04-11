@@ -10,3 +10,7 @@ key: Admiral Helm Maintainers
 # Enable automatic generation of release notes using GitHubs release notes generator.
 # see: https://docs.github.com/en/repositories/releasing-projects-on-github/automatically-generated-release-notes
 generate-release-notes: true
+
+# Skip upload if the GitHub release for this version already exists.
+# Allows docs/CI-only changes without requiring a version bump.
+skip-existing: true

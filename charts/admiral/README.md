@@ -1,6 +1,6 @@
 # admiral
 
-![Version: 0.2.0](https://img.shields.io/badge/Version-0.2.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: v0.0.1](https://img.shields.io/badge/AppVersion-v0.0.1-informational?style=flat-square)
+![Version: 0.3.0](https://img.shields.io/badge/Version-0.3.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: v0.0.1](https://img.shields.io/badge/AppVersion-v0.0.1-informational?style=flat-square)
 
 Open source platform orchestrator that bridges IaC and app deployments. Dependency graph across the full stack, environment-aware config, and deterministic rollbacks.
 
@@ -18,18 +18,18 @@ Admiral requires three backing services: a **PostgreSQL** database, **S3-compati
 
 ```bash
 # Create a KinD cluster with ingress support
-curl -sL https://raw.githubusercontent.com/admiral-io/admiral-helm/master/kind/cluster.yaml | kind create cluster --config=-
+curl -sL https://raw.githubusercontent.com/admiral-io/admiral-helm/master/kind/cluster.yaml | kind create cluster --name admiral --config=-
 
 # Install ingress-nginx
 kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/kind/deploy.yaml
-
 kubectl rollout status deployment ingress-nginx-controller --namespace ingress-nginx --timeout=120s
 
 # Add the Admiral Helm repository
 helm repo add admiral https://charts.admiral.io
+helm repo update admiral
 
 # Install Admiral with demo dependencies
-helm install admiral admiral/admiral -f https://raw.githubusercontent.com/admiral-io/admiral-helm/master/values/kind.yaml
+helm install admiral admiral/admiral -f https://raw.githubusercontent.com/admiral-io/admiral-helm/refs/heads/master/charts/admiral/demo-values.yaml
 
 # Open in browser
 open http://admiral.127.0.0.1.nip.io
