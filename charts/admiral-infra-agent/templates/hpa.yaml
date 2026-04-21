@@ -2,14 +2,14 @@
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
-  name: {{ include "admiral-iac-agent.fullname" . }}
+  name: {{ include "admiral-infra-agent.fullname" . }}
   labels:
-    {{- include "admiral-iac-agent.labels" . | nindent 4 }}
+    {{- include "admiral-infra-agent.labels" . | nindent 4 }}
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: {{ include "admiral-iac-agent.fullname" . }}
+    name: {{ include "admiral-infra-agent.fullname" . }}
   minReplicas: {{ .Values.autoscaling.minReplicas }}
   maxReplicas: {{ .Values.autoscaling.maxReplicas }}
   metrics:

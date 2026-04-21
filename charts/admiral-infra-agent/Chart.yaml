@@ -1,0 +1,10 @@
+apiVersion: v2
+name: admiral-infra-agent
+description: Admiral infrastructure agent — runs Terraform/OpenTofu jobs on behalf of the Admiral control plane.
+icon: https://charts.admiral.io/logo.png
+type: application
+version: 0.3.0
+appVersion: v0.1.0
+maintainers:
+  - name: Admiral Contributors
+    url: https://github.com/admiral-io/admiral-helm

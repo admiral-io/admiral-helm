@@ -1,0 +1,52 @@
+{{- $fullName := include "admiral-infra-agent.fullname" . -}}
+
+==========================================================================
+  Admiral Infra Agent
+==========================================================================
+
+  Agent:       {{ $fullName }}
+  Replicas:    {{ .Values.replicaCount }}
+  Server:      {{ .Values.agent.server }}
+  Poll every:  {{ .Values.agent.pollInterval }}
+  {{- if .Values.agent.insecure }}
+  TLS:         DISABLED (--insecure)
+  {{- end }}
+
+  Watch the agent logs:
+    kubectl logs --namespace {{ .Release.Namespace }} -l app.kubernetes.io/name={{ include "admiral-infra-agent.name" . }} -f
+
+  Check rollout status:
+    kubectl rollout status --namespace {{ .Release.Namespace }} deploy/{{ $fullName }}
+
+{{- if not .Values.serviceAccount.annotations }}
+
+--------------------------------------------------------------------------
+  Cloud-provider credentials
+--------------------------------------------------------------------------
+
+  No ServiceAccount annotations are configured. If your Terraform/OpenTofu
+  modules need AWS, GCP, or Azure credentials, grant them via Workload
+  Identity / IRSA rather than long-lived env vars:
+
+    EKS IRSA:
+      --set serviceAccount.annotations."eks\.amazonaws\.com/role-arn"=arn:aws:iam::ACCOUNT:role/NAME
+
+    GKE Workload Identity:
+      --set serviceAccount.annotations."iam\.gke\.io/gcp-service-account"=SA@PROJECT.iam.gserviceaccount.com
+
+    Azure Workload Identity:
+      --set serviceAccount.annotations."azure\.workload\.identity/client-id"=CLIENT_ID
+      --set podLabels."azure\.workload\.identity/use"=true
+{{- end }}
+
+{{- if not .Values.pdb.create }}
+
+--------------------------------------------------------------------------
+  Protecting active jobs from disruption
+--------------------------------------------------------------------------
+
+  PodDisruptionBudget is disabled. Consider enabling it in production so
+  node drains and cluster upgrades don't interrupt in-flight Terraform runs:
+
+    --set pdb.create=true --set replicaCount=2
+{{- end }}

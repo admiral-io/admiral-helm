@@ -12,11 +12,11 @@ helm repo add admiral https://charts.admiral.io
 
 The charts published currently by this repository are the following:
 
-| Chart name                                    | Status | Description                                                             |
-| --------------------------------------------- | ------ | ----------------------------------------------------------------------- |
-| [admiral](charts/admiral)                     | Alpha  | Deploy applications and provision infrastructure from a single platform |
-| [admiral-iac-agent](charts/admiral-iac-agent) | Alpha  | Connect infrastructure providers to the Admiral control plane           |
-| [admiral-k8s-agent](charts/admiral-k8s-agent) | Alpha  | Connect a Kubernetes cluster to the Admiral control plane               |
+| Chart name                                        | Status | Description                                                             |
+| ------------------------------------------------- | ------ | ----------------------------------------------------------------------- |
+| [admiral](charts/admiral)                         | Alpha  | Deploy applications and provision infrastructure from a single platform |
+| [admiral-infra-agent](charts/admiral-infra-agent) | Alpha  | Connect infrastructure providers to the Admiral control plane           |
+| [admiral-k8s-agent](charts/admiral-k8s-agent)     | Alpha  | Connect a Kubernetes cluster to the Admiral control plane               |
 
 ## Security Policy
 

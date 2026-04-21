@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: "{{ include "admiral-infra-agent.fullname" . }}-test-connection"
+  labels:
+    {{- include "admiral-infra-agent.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": test
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+spec:
+  restartPolicy: Never
+  containers:
+    - name: resolve-server
+      image: busybox:1.37
+      command:
+        - sh
+        - -c
+        - |
+          host="{{ .Values.agent.server }}"
+          # Strip any :port suffix for name resolution.
+          name="${host%%:*}"
+          echo "Resolving Admiral server: ${name}"
+          nslookup "${name}"

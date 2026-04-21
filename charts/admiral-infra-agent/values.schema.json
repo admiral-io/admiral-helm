@@ -1,0 +1,194 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "properties": {
+        "affinity": {
+            "type": "object"
+        },
+        "agent": {
+            "type": "object",
+            "properties": {
+                "existingSecret": {
+                    "type": "string"
+                },
+                "existingSecretKey": {
+                    "type": "string"
+                },
+                "extraArgs": {
+                    "type": "array"
+                },
+                "insecure": {
+                    "type": "boolean"
+                },
+                "pollInterval": {
+                    "type": "string"
+                },
+                "server": {
+                    "type": "string"
+                },
+                "token": {
+                    "type": "string"
+                },
+                "verbose": {
+                    "type": "boolean"
+                },
+                "workspaceDir": {
+                    "type": "string"
+                }
+            }
+        },
+        "autoscaling": {
+            "type": "object",
+            "properties": {
+                "enabled": {
+                    "type": "boolean"
+                },
+                "maxReplicas": {
+                    "type": "integer"
+                },
+                "minReplicas": {
+                    "type": "integer"
+                },
+                "targetCPUUtilizationPercentage": {
+                    "type": "integer"
+                }
+            }
+        },
+        "extraEnvVars": {
+            "type": "array"
+        },
+        "extraEnvVarsCM": {
+            "type": "string"
+        },
+        "extraEnvVarsSecret": {
+            "type": "string"
+        },
+        "extraVolumeMounts": {
+            "type": "array"
+        },
+        "extraVolumes": {
+            "type": "array"
+        },
+        "fullnameOverride": {
+            "type": "string"
+        },
+        "image": {
+            "type": "object",
+            "properties": {
+                "pullPolicy": {
+                    "type": "string"
+                },
+                "repository": {
+                    "type": "string"
+                },
+                "tag": {
+                    "type": "string"
+                }
+            }
+        },
+        "imagePullSecrets": {
+            "type": "array"
+        },
+        "initContainers": {
+            "type": "array"
+        },
+        "livenessProbe": {
+            "type": "object"
+        },
+        "nameOverride": {
+            "type": "string"
+        },
+        "networkPolicy": {
+            "type": "object",
+            "properties": {
+                "allowExternalEgress": {
+                    "type": "boolean"
+                },
+                "enabled": {
+                    "type": "boolean"
+                },
+                "extraEgress": {
+                    "type": "array"
+                },
+                "extraIngress": {
+                    "type": "array"
+                }
+            }
+        },
+        "nodeSelector": {
+            "type": "object"
+        },
+        "pdb": {
+            "type": "object",
+            "properties": {
+                "create": {
+                    "type": "boolean"
+                },
+                "maxUnavailable": {
+                    "type": "string"
+                },
+                "minAvailable": {
+                    "type": "integer"
+                }
+            }
+        },
+        "podAnnotations": {
+            "type": "object"
+        },
+        "podLabels": {
+            "type": "object"
+        },
+        "podSecurityContext": {
+            "type": "object"
+        },
+        "readinessProbe": {
+            "type": "object"
+        },
+        "replicaCount": {
+            "type": "integer"
+        },
+        "resources": {
+            "type": "object"
+        },
+        "securityContext": {
+            "type": "object"
+        },
+        "serviceAccount": {
+            "type": "object",
+            "properties": {
+                "annotations": {
+                    "type": "object"
+                },
+                "automount": {
+                    "type": "boolean"
+                },
+                "create": {
+                    "type": "boolean"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "sidecars": {
+            "type": "array"
+        },
+        "terminationGracePeriodSeconds": {
+            "type": "integer"
+        },
+        "tolerations": {
+            "type": "array"
+        },
+        "tools": {
+            "type": "object",
+            "properties": {
+                "terraformVersion": {
+                    "type": "string"
+                },
+                "tofuVersion": {
+                    "type": "string"
+                }
+            }
+        }
+    }
+}

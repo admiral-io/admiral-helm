@@ -1,0 +1,58 @@
+{{ template "chart.header" . }}
+
+{{ template "chart.badgesSection" . }}
+
+{{ template "chart.description" . }}
+
+## Overview
+
+The Admiral infra-agent is a long-lived worker that polls the Admiral control plane for Terraform / OpenTofu jobs, runs them in an isolated workspace, and reports results back. It exposes **no HTTP endpoints** — it is a pure client, so this chart deploys only a `Deployment` plus a few supporting resources (ServiceAccount, Secret, optional PDB / NetworkPolicy / HPA).
+
+## Quick Start
+
+```bash
+helm install my-agent oci://ghcr.io/admiral-io/charts/admiral-infra-agent \
+  --set agent.server=admiral.example.com:443 \
+  --set agent.token=adms_...
+```
+
+For production, reference the runner token via a pre-created Secret:
+
+```bash
+kubectl create secret generic admiral-runner-token \
+  --from-literal=runner-token=adms_...
+
+helm install my-agent oci://ghcr.io/admiral-io/charts/admiral-infra-agent \
+  --set agent.server=admiral.example.com:443 \
+  --set agent.existingSecret=admiral-runner-token
+```
+
+## Cloud credentials
+
+Terraform modules invoked by the agent pick up credentials from the pod's environment. Prefer **Workload Identity / IRSA** over static keys — set the appropriate annotation on `serviceAccount.annotations` and the cloud SDK will do the rest:
+
+```yaml
+serviceAccount:
+  annotations:
+    # EKS IRSA
+    eks.amazonaws.com/role-arn: arn:aws:iam::123456789012:role/admiral-infra-agent
+    # GKE Workload Identity
+    iam.gke.io/gcp-service-account: admiral-infra-agent@PROJECT.iam.gserviceaccount.com
+```
+
+Static credentials (AWS keys, Vault tokens, etc.) can be injected via `extraEnvVarsSecret`.
+
+## Protecting active jobs
+
+On `SIGTERM`, the agent stops claiming new jobs and drains in-flight Terraform runs before exiting. The chart sets `terminationGracePeriodSeconds: 300` by default; tune to the longest job you expect to run. For production, also enable the PodDisruptionBudget:
+
+```yaml
+replicaCount: 2
+pdb:
+  create: true
+  minAvailable: 1
+```
+
+{{ template "chart.requirementsSection" . }}
+
+{{ template "chart.valuesSection" . }}

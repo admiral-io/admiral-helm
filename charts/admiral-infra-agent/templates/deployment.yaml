@@ -1,0 +1,130 @@
+{{- include "admiral-infra-agent.validateValues" . }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "admiral-infra-agent.fullname" . }}
+  labels:
+    {{- include "admiral-infra-agent.labels" . | nindent 4 }}
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "admiral-infra-agent.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "admiral-infra-agent.labels" . | nindent 8 }}
+        {{- with .Values.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "admiral-infra-agent.serviceAccountName" . }}
+      terminationGracePeriodSeconds: {{ .Values.terminationGracePeriodSeconds }}
+      {{- with .Values.podSecurityContext }}
+      securityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.initContainers }}
+      initContainers:
+        {{- include "admiral-infra-agent.tplvalues.render" (dict "value" . "context" $) | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: {{ .Chart.Name }}
+          {{- with .Values.securityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          args:
+            - run
+            {{- with .Values.agent.extraArgs }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          env:
+            - name: ADMIRAL_SERVER
+              value: {{ .Values.agent.server | quote }}
+            - name: ADMIRAL_RUNNER_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "admiral-infra-agent.tokenSecretName" . }}
+                  key: {{ include "admiral-infra-agent.tokenSecretKey" . }}
+            - name: ADMIRAL_POLL_INTERVAL
+              value: {{ .Values.agent.pollInterval | quote }}
+            - name: ADMIRAL_INSECURE
+              value: {{ .Values.agent.insecure | quote }}
+            {{- if .Values.agent.verbose }}
+            - name: ADMIRAL_VERBOSE
+              value: "true"
+            {{- end }}
+            {{- with .Values.agent.workspaceDir }}
+            - name: ADMIRAL_WORKSPACE_DIR
+              value: {{ . | quote }}
+            {{- end }}
+            {{- with .Values.tools.terraformVersion }}
+            - name: TERRAFORM_VERSION
+              value: {{ . | quote }}
+            {{- end }}
+            {{- with .Values.tools.tofuVersion }}
+            - name: TOFU_VERSION
+              value: {{ . | quote }}
+            {{- end }}
+            {{- with .Values.extraEnvVars }}
+            {{- include "admiral-infra-agent.tplvalues.render" (dict "value" . "context" $) | nindent 12 }}
+            {{- end }}
+          {{- if or .Values.extraEnvVarsCM .Values.extraEnvVarsSecret }}
+          envFrom:
+            {{- if .Values.extraEnvVarsCM }}
+            - configMapRef:
+                name: {{ include "admiral-infra-agent.tplvalues.render" (dict "value" .Values.extraEnvVarsCM "context" $) }}
+            {{- end }}
+            {{- if .Values.extraEnvVarsSecret }}
+            - secretRef:
+                name: {{ include "admiral-infra-agent.tplvalues.render" (dict "value" .Values.extraEnvVarsSecret "context" $) }}
+            {{- end }}
+          {{- end }}
+          {{- with .Values.livenessProbe }}
+          livenessProbe:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.readinessProbe }}
+          readinessProbe:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.extraVolumeMounts }}
+          volumeMounts:
+            {{- include "admiral-infra-agent.tplvalues.render" (dict "value" . "context" $) | nindent 12 }}
+          {{- end }}
+        {{- with .Values.sidecars }}
+        {{- include "admiral-infra-agent.tplvalues.render" (dict "value" . "context" $) | nindent 8 }}
+        {{- end }}
+      {{- with .Values.extraVolumes }}
+      volumes:
+        {{- include "admiral-infra-agent.tplvalues.render" (dict "value" . "context" $) | nindent 8 }}
+      {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
