@@ -63,6 +63,22 @@ entries:
     urls:
     - https://github.com/admiral-io/admiral-helm/releases/download/admiral-iac-agent-0.1.0/admiral-iac-agent-0.1.0.tgz
     version: 0.1.0
+  admiral-infra-agent:
+  - apiVersion: v2
+    appVersion: v0.1.0
+    created: "2026-04-21T23:28:56.147413589Z"
+    description: Admiral infrastructure agent — runs Terraform/OpenTofu jobs on behalf
+      of the Admiral control plane.
+    digest: cd496cc791ee959c67974f6bd55c21fe02a351e9da03033dee483e690d83ec25
+    icon: https://charts.admiral.io/logo.png
+    maintainers:
+    - name: Admiral Contributors
+      url: https://github.com/admiral-io/admiral-helm
+    name: admiral-infra-agent
+    type: application
+    urls:
+    - https://github.com/admiral-io/admiral-helm/releases/download/admiral-infra-agent-0.3.0/admiral-infra-agent-0.3.0.tgz
+    version: 0.3.0
   admiral-k8s-agent:
   - apiVersion: v2
     appVersion: 1.16.0
@@ -89,4 +105,4 @@ entries:
     urls:
     - https://github.com/admiral-io/admiral-helm/releases/download/admiral-k8s-agent-0.1.0/admiral-k8s-agent-0.1.0.tgz
     version: 0.1.0
-generated: "2026-04-10T23:25:18.548206773Z"
+generated: "2026-04-21T23:28:56.280073551Z"
