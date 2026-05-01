@@ -50,6 +50,38 @@ jobs:
         env:
           PGP_PRIVATE_KEY: ${{ secrets.PGP_PRIVATE_KEY }}
           PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
+      - name: Probe token permissions
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "=== Response headers from repo endpoint ==="
+          curl -sS -I -H "Authorization: token $GITHUB_TOKEN" \
+            "https://api.github.com/repos/${{ github.repository }}" \
+            | grep -iE 'x-(oauth-scopes|accepted-github-permissions|github-permissions|ratelimit-resource)' || true
+
+          echo
+          echo "=== Repo metadata (archived?, permissions) ==="
+          curl -sS -H "Authorization: token $GITHUB_TOKEN" \
+            "https://api.github.com/repos/${{ github.repository }}" \
+            | jq '{archived, disabled, visibility, permissions}'
+
+          echo
+          echo "=== Attempt draft release creation ==="
+          http_code=$(curl -sS -o /tmp/release_resp.json -w "%{http_code}" -X POST \
+            -H "Authorization: token $GITHUB_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/${{ github.repository }}/releases" \
+            -d '{"tag_name":"probe-token-perms","name":"probe","draft":true}')
+          echo "HTTP $http_code"
+          cat /tmp/release_resp.json | jq . || cat /tmp/release_resp.json
+
+          if [ "$http_code" = "201" ]; then
+            release_id=$(jq -r .id /tmp/release_resp.json)
+            echo "Cleaning up draft release $release_id"
+            curl -sS -X DELETE \
+              -H "Authorization: token $GITHUB_TOKEN" \
+              "https://api.github.com/repos/${{ github.repository }}/releases/$release_id"
+          fi
       - name: Run chart-releaser
         uses: helm/chart-releaser-action@cae68fefc6b5f367a0275617c9f83181ba54714f # v1.7.0
         with:
