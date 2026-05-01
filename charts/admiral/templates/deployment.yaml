@@ -5,6 +5,7 @@ metadata:
   name: {{ include "admiral.fullname" . }}
   labels:
     {{- include "admiral.labels" . | nindent 4 }}
+    app.kubernetes.io/component: server
 spec:
   {{- if not .Values.autoscaling.enabled }}
   replicas: {{ .Values.replicaCount }}
@@ -15,12 +16,15 @@ spec:
   template:
     metadata:
       annotations:
+        {{- if not .Values.existingConfigMap }}
         checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+        {{- end }}
       {{- with .Values.podAnnotations }}
         {{- toYaml . | nindent 8 }}
       {{- end }}
       labels:
         {{- include "admiral.labels" . | nindent 8 }}
+        app.kubernetes.io/component: server
         {{- with .Values.podLabels }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
@@ -64,58 +68,23 @@ spec:
               containerPort: {{ .Values.server.port }}
               protocol: TCP
           env:
-            # --- Logger ---
-            - name: LOGGER_LEVEL
-              value: {{ .Values.server.logLevel | quote }}
-            # --- Database ---
-            - name: DATABASE_HOST
-              value: {{ include "admiral.database.host" . | quote }}
-            - name: DATABASE_PORT
-              value: {{ include "admiral.database.port" . | quote }}
-            - name: DATABASE_NAME
-              value: {{ include "admiral.database.name" . | quote }}
-            - name: DATABASE_USER
-              value: {{ include "admiral.database.user" . | quote }}
+            # --- Secrets (injected via env vars, not in ConfigMap) ---
             - name: DATABASE_PASSWORD
               valueFrom:
                 secretKeyRef:
                   name: {{ include "admiral.database.secretName" . }}
                   key: {{ include "admiral.database.secretKey" . }}
-            - name: DATABASE_SSL_MODE
-              value: {{ include "admiral.database.sslMode" . | quote }}
-            # --- OAuth2 ---
-            - name: OAUTH2_NAME
-              value: {{ .Values.oauth2.name | quote }}
-            - name: OAUTH2_ISSUER
-              value: {{ include "admiral.oauth2.issuer" . | quote }}
-            - name: OAUTH2_CLIENT_ID
-              value: {{ .Values.oauth2.clientId | quote }}
             - name: OAUTH2_CLIENT_SECRET
               valueFrom:
                 secretKeyRef:
                   name: {{ include "admiral.oauth2.secretName" . }}
                   key: {{ .Values.oauth2.clientSecretKey | default "client-secret" }}
-            - name: OAUTH2_SCOPES
-              value: {{ .Values.oauth2.scopes | quote }}
-            - name: OAUTH2_REDIRECT_URL
-              value: {{ include "admiral.oauth2.redirectUrl" . | quote }}
             - name: OAUTH2_SIGNING_SECRET
               valueFrom:
                 secretKeyRef:
                   name: {{ include "admiral.oauth2.secretName" . }}
                   key: {{ .Values.oauth2.signingSecretKey | default "signing-secret" }}
-            - name: OAUTH2_REFRESH_TOKEN_TTL
-              value: {{ .Values.oauth2.refreshTokenTTL | quote }}
-            # --- Object Storage ---
-            - name: STORAGE_TYPE
-              value: {{ .Values.objectStorage.type | quote }}
-            {{- if eq .Values.objectStorage.type "s3" }}
-            - name: STORAGE_ENDPOINT
-              value: {{ include "admiral.objectStorage.endpoint" . | quote }}
-            - name: STORAGE_REGION
-              value: {{ .Values.objectStorage.s3.region | quote }}
-            - name: STORAGE_USE_SSL
-              value: {{ .Values.objectStorage.s3.useSSL | quote }}
+            {{- if and (eq .Values.objectStorage.type "s3") (include "admiral.objectStorage.secretName" . ) }}
             - name: STORAGE_ACCESS_KEY
               valueFrom:
                 secretKeyRef:
@@ -127,39 +96,13 @@ spec:
                   name: {{ include "admiral.objectStorage.secretName" . }}
                   key: {{ include "admiral.objectStorage.secretKeyKey" . }}
             {{- end }}
-            {{- if eq .Values.objectStorage.type "gcs" }}
-            - name: GCS_PROJECT_ID
-              value: {{ .Values.objectStorage.gcs.projectId | quote }}
-            {{- if .Values.objectStorage.gcs.existingSecret }}
+            {{- if and (eq .Values.objectStorage.type "gcs") .Values.objectStorage.gcs.existingSecret }}
             - name: GCS_CREDENTIALS_JSON
               valueFrom:
                 secretKeyRef:
                   name: {{ .Values.objectStorage.gcs.existingSecret }}
                   key: {{ .Values.objectStorage.gcs.secretKey | default "credentials-json" }}
             {{- end }}
-            {{- end }}
-            # --- Buckets ---
-            - name: MANIFEST_BUCKET_NAME
-              value: {{ .Values.buckets.manifests | quote }}
-            - name: REVISION_BUCKET_NAME
-              value: {{ .Values.buckets.revisions | quote }}
-            # --- Session ---
-            - name: SESSION_IDLE_TIMEOUT
-              value: {{ .Values.session.idleTimeout | quote }}
-            - name: SESSION_LIFETIME
-              value: {{ .Values.session.lifetime | quote }}
-            - name: SESSION_COOKIE_NAME
-              value: {{ .Values.session.cookie.name | quote }}
-            - name: SESSION_COOKIE_DOMAIN
-              value: {{ .Values.session.cookie.domain | quote }}
-            - name: SESSION_COOKIE_HTTP_ONLY
-              value: {{ .Values.session.cookie.httpOnly | quote }}
-            - name: SESSION_COOKIE_SAME_SITE
-              value: {{ .Values.session.cookie.sameSite | quote }}
-            - name: SESSION_COOKIE_SECURE
-              value: {{ .Values.session.cookie.secure | quote }}
-            - name: SESSION_COOKIE_PERSIST
-              value: {{ .Values.session.cookie.persist | quote }}
             {{- with .Values.extraEnvVars }}
             {{- include "admiral.tplvalues.render" (dict "value" . "context" $) | nindent 12 }}
             {{- end }}
@@ -199,7 +142,7 @@ spec:
       volumes:
         - name: config
           configMap:
-            name: {{ include "admiral.fullname" . }}
+            name: {{ .Values.existingConfigMap | default (include "admiral.fullname" .) }}
         {{- with .Values.extraVolumes }}
         {{- include "admiral.tplvalues.render" (dict "value" . "context" $) | nindent 8 }}
         {{- end }}
@@ -213,5 +156,9 @@ spec:
       {{- end }}
       {{- with .Values.tolerations }}
       tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.topologySpreadConstraints }}
+      topologySpreadConstraints:
         {{- toYaml . | nindent 8 }}
       {{- end }}

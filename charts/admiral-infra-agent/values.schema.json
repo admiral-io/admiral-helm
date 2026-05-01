@@ -189,6 +189,9 @@
                     "type": "string"
                 }
             }
+        },
+        "topologySpreadConstraints": {
+            "type": "array"
         }
     }
 }

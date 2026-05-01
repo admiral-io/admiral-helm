@@ -26,6 +26,12 @@ spec:
           protocol: UDP
         - port: 53
           protocol: TCP
+    # Admiral control plane (parsed from agent.server)
+    {{- if .Values.agent.server }}
+    - ports:
+        - port: {{ (split ":" .Values.agent.server)._1 | default 443 }}
+          protocol: TCP
+    {{- end }}
     {{- with .Values.networkPolicy.extraEgress }}
     {{- toYaml . | nindent 4 }}
     {{- end }}
