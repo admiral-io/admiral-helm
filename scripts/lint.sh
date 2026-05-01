@@ -14,9 +14,7 @@ echo -e "\n-- Linting all Helm Charts --\n"
 docker run \
      -v "$SRCROOT:/workdir" \
      -w /workdir \
+     -e GIT_CONFIG_GLOBAL=/tmp/gitconfig \
+     --entrypoint sh \
      quay.io/helmpack/chart-testing:v3.14.0 \
-     ct lint \
-     --config .github/configs/ct-lint.yaml \
-     --lint-conf .github/configs/lintconf.yaml \
-     --skip-helm-dependencies \
-     --debug
+     -c 'git config --global --add safe.directory /workdir && ct lint --config .github/configs/ct-lint.yaml --lint-conf .github/configs/lintconf.yaml --skip-helm-dependencies --debug'
