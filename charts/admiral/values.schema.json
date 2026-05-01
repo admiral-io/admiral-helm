@@ -148,6 +148,9 @@
                 }
             }
         },
+        "existingConfigMap": {
+            "type": "string"
+        },
         "externalDatabase": {
             "type": "object",
             "properties": {
@@ -803,6 +806,9 @@
             "type": "array"
         },
         "tolerations": {
+            "type": "array"
+        },
+        "topologySpreadConstraints": {
             "type": "array"
         }
     }
