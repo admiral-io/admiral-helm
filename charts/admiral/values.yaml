@@ -21,6 +21,16 @@ nameOverride: ""
 fullnameOverride: ""
 
 # =============================================================================
+# Configuration
+# =============================================================================
+
+# -- Name of an existing ConfigMap containing a `config.yaml` key.
+# When set, the chart skips creating its own ConfigMap and mounts this one
+# instead. Use this as an escape hatch to provide a fully custom configuration
+# that is not covered by the chart's structured values.
+existingConfigMap: ""
+
+# =============================================================================
 # Server Configuration
 # =============================================================================
 
@@ -391,6 +401,14 @@ tolerations: []
 
 # -- Affinity rules for pod assignment
 affinity: {}
+
+# -- Topology spread constraints for pod distribution across zones/nodes
+topologySpreadConstraints: []
+  # - maxSkew: 1
+  #   topologyKey: topology.kubernetes.io/zone
+  #   whenUnsatisfiable: DoNotSchedule
+  #   labelSelector:
+  #     matchLabels: {}  # auto-populated with selectorLabels
 
 # =============================================================================
 # Database — PostgreSQL

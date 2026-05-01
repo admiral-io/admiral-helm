@@ -262,3 +262,11 @@ tolerations: []
 
 # -- Affinity rules for pod assignment
 affinity: {}
+
+# -- Topology spread constraints for pod distribution across zones/nodes
+topologySpreadConstraints: []
+  # - maxSkew: 1
+  #   topologyKey: topology.kubernetes.io/zone
+  #   whenUnsatisfiable: DoNotSchedule
+  #   labelSelector:
+  #     matchLabels: {}  # auto-populated with selectorLabels

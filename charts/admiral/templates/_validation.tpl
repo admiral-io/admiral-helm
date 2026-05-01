@@ -38,11 +38,10 @@ Produces clear error messages when required settings are missing.
   {{- end }}
 {{- end }}
 
-{{/* --- S3: credentials must be provided when not using MinIO subchart --- */}}
-{{- if and (not .Values.minio.enabled) (eq .Values.objectStorage.type "s3") .Values.objectStorage.s3.endpoint }}
-  {{- if not .Values.objectStorage.s3.existingSecret }}
-    {{- fail "\n\nADMIRAL CONFIGURATION ERROR:\n  S3 credentials secret is required when using external S3:\n    objectStorage.s3.existingSecret=<secret-name>\n" }}
-  {{- end }}
-{{- end }}
+{{/* --- S3: credentials via secret or IRSA/Workload Identity --- */}}
+{{/* No validation failure here: when using IRSA or Workload Identity, no secret
+     is needed. The AWS SDK picks up credentials from the pod's service account
+     automatically. Configure serviceAccount.annotations with the appropriate
+     IAM role ARN or GCP service account. */}}
 
 {{- end }}
