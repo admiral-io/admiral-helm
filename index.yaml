@@ -3,6 +3,27 @@ entries:
   admiral:
   - apiVersion: v2
     appVersion: v0.0.1
+    created: "2026-05-12T04:00:46.734520062Z"
+    dependencies:
+    - condition: minio.enabled
+      name: minio
+      repository: https://charts.min.io
+      version: 5.4.0
+    description: Open source platform orchestrator that bridges IaC and app deployments.
+      Dependency graph across the full stack, environment-aware config, and deterministic
+      rollbacks.
+    digest: bb53d35136df2020902b1a4e20c6a3a432d248caf2dbd6d48d5c510bed8cecd0
+    icon: https://charts.admiral.io/logo.png
+    maintainers:
+    - name: Admiral Contributors
+      url: https://github.com/admiral-io/admiral-helm
+    name: admiral
+    type: application
+    urls:
+    - https://github.com/admiral-io/admiral-helm/releases/download/admiral-0.5.0/admiral-0.5.0.tgz
+    version: 0.5.0
+  - apiVersion: v2
+    appVersion: v0.0.1
     created: "2026-05-01T19:11:56.713907702Z"
     dependencies:
     - condition: postgresql.enabled
@@ -44,6 +65,21 @@ entries:
     version: 0.4.0
   admiral-k8s-agent:
   - apiVersion: v2
+    appVersion: v0.1.0
+    created: "2026-05-12T04:00:47.050435465Z"
+    description: Admiral Kubernetes agent — connects a cluster to the Admiral control
+      plane.
+    digest: cdb34891158491e786dbae56c0ca6969f179a7aeff521f6ecb89ddc679835177
+    icon: https://charts.admiral.io/logo.png
+    maintainers:
+    - name: Admiral Contributors
+      url: https://github.com/admiral-io/admiral-helm
+    name: admiral-k8s-agent
+    type: application
+    urls:
+    - https://github.com/admiral-io/admiral-helm/releases/download/admiral-k8s-agent-0.4.0/admiral-k8s-agent-0.4.0.tgz
+    version: 0.4.0
+  - apiVersion: v2
     appVersion: 1.16.0
     created: "2026-05-01T19:11:57.10383595Z"
     description: Connect a Kubernetes cluster to the Admiral control plane
@@ -57,4 +93,4 @@ entries:
     urls:
     - https://github.com/admiral-io/admiral-helm/releases/download/admiral-k8s-agent-0.3.0/admiral-k8s-agent-0.3.0.tgz
     version: 0.3.0
-generated: "2026-05-01T19:11:57.103861187Z"
+generated: "2026-05-12T04:00:47.050451845Z"
