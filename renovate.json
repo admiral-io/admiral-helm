@@ -1,4 +1,14 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": ["local>admiral-io/.github"]
+  "extends": ["local>admiral-io/.github"],
+  "customManagers": [
+    {
+      "customType": "regex",
+      "description": "Pick up image tags annotated with `# renovate: datasource=... depName=...` in Helm values files.",
+      "fileMatch": ["(^|/)values\\.yaml$"],
+      "matchStrings": [
+        "#\\s*renovate:\\s*datasource=(?<datasource>[a-z-]+?)\\s+depName=(?<depName>[^\\s]+?)(?:\\s+versioning=(?<versioning>[a-z-]+?))?\\s*\\n\\s*tag:\\s*[\"']?(?<currentValue>[^\"'\\s]+)"
+      ]
+    }
+  ]
 }

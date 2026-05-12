@@ -425,6 +425,7 @@ postgres:
   # -- Container image
   image:
     repository: postgres
+    # renovate: datasource=docker depName=postgres
     tag: "17-alpine"
     pullPolicy: IfNotPresent
   # -- Authentication and database bootstrap
@@ -548,6 +549,7 @@ dex:
     # Pinned: :latest floats forward to nightlies. Bump deliberately when
     # validating new versions — Dex 2.46 introduced CRDs and a fail-init
     # crdHandling default that requires matching RBAC.
+    # renovate: datasource=docker depName=ghcr.io/dexidp/dex
     tag: v2.45.1
     pullPolicy: IfNotPresent
   # -- Dex configuration. Rendered as a ConfigMap.
@@ -602,6 +604,7 @@ redis:
   # -- Redis container image
   image:
     repository: redis
+    # renovate: datasource=docker depName=redis
     tag: "7-alpine"
     pullPolicy: IfNotPresent
   # -- Redis authentication
