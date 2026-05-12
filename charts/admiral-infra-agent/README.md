@@ -1,6 +1,6 @@
 # admiral-infra-agent
 
-![Version: 0.3.0](https://img.shields.io/badge/Version-0.3.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: v0.1.0](https://img.shields.io/badge/AppVersion-v0.1.0-informational?style=flat-square)
+![Version: 0.4.0](https://img.shields.io/badge/Version-0.4.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: v0.1.0](https://img.shields.io/badge/AppVersion-v0.1.0-informational?style=flat-square)
 
 Admiral infrastructure agent — runs Terraform/OpenTofu jobs on behalf of the Admiral control plane.
 
@@ -111,3 +111,4 @@ pdb:
 | tools | object | `{"terraformVersion":"","tofuVersion":""}` | Terraform / OpenTofu versions installed at container startup by entrypoint.sh. Leave empty to use whatever the image was built with (usually `latest`). Accepts any version string tfenv/tofuenv recognises (e.g. "1.9.8"). |
 | tools.terraformVersion | string | `""` | Terraform version (consumed via TERRAFORM_VERSION env var) |
 | tools.tofuVersion | string | `""` | OpenTofu version (consumed via TOFU_VERSION env var) |
+| topologySpreadConstraints | list | `[]` | Topology spread constraints for pod distribution across zones/nodes |

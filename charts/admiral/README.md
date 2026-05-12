@@ -1,6 +1,6 @@
 # admiral
 
-![Version: 0.3.0](https://img.shields.io/badge/Version-0.3.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: v0.0.1](https://img.shields.io/badge/AppVersion-v0.0.1-informational?style=flat-square)
+![Version: 0.4.0](https://img.shields.io/badge/Version-0.4.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: v0.0.1](https://img.shields.io/badge/AppVersion-v0.0.1-informational?style=flat-square)
 
 Open source platform orchestrator that bridges IaC and app deployments. Dependency graph across the full stack, environment-aware config, and deterministic rollbacks.
 
@@ -83,6 +83,7 @@ helm install admiral charts/admiral -f my-values.yaml
 | dex.service | object | `{"port":5556}` | Dex service configuration |
 | dex.serviceAccount | object | `{"annotations":{},"create":true}` | Dex service account |
 | dex.serviceAccount.create | bool | `true` | Create a service account for Dex |
+| existingConfigMap | string | `""` | Name of an existing ConfigMap containing a `config.yaml` key. When set, the chart skips creating its own ConfigMap and mounts this one instead. Use this as an escape hatch to provide a fully custom configuration that is not covered by the chart's structured values. |
 | externalDatabase | object | `{"database":"admiral","existingSecret":"","existingSecretPasswordKey":"db-password","host":"","password":"","port":5432,"sslMode":"disable","username":"admiral"}` | External database configuration (used when postgresql.enabled=false) Pattern: Bitnami Gitea/Airflow |
 | externalDatabase.database | string | `"admiral"` | External database name |
 | externalDatabase.existingSecret | string | `""` | Name of existing secret containing the database password |
@@ -235,3 +236,4 @@ helm install admiral charts/admiral -f my-values.yaml
 | session.lifetime | string | `"24h"` | Session lifetime |
 | sidecars | list | `[]` | Extra sidecar containers for the admiral server pod |
 | tolerations | list | `[]` | Tolerations for pod assignment |
+| topologySpreadConstraints | list | `[]` | Topology spread constraints for pod distribution across zones/nodes |

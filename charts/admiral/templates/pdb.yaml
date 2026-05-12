@@ -5,6 +5,7 @@ metadata:
   name: {{ include "admiral.fullname" . }}
   labels:
     {{- include "admiral.labels" . | nindent 4 }}
+    app.kubernetes.io/component: server
 spec:
   {{- if .Values.pdb.maxUnavailable }}
   maxUnavailable: {{ .Values.pdb.maxUnavailable }}

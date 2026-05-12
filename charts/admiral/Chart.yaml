@@ -3,7 +3,7 @@ name: admiral
 description: Open source platform orchestrator that bridges IaC and app deployments. Dependency graph across the full stack, environment-aware config, and deterministic rollbacks.
 icon: https://charts.admiral.io/logo.png
 type: application
-version: 0.3.0
+version: 0.4.0
 appVersion: v0.0.1
 maintainers:
   - name: Admiral Contributors

@@ -24,6 +24,7 @@ spec:
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}
+      serviceAccountName: {{ include "admiral.serviceAccountName" . }}
       restartPolicy: Never
       containers:
         - name: migrations
@@ -32,10 +33,6 @@ spec:
           args:
             {{- toYaml .Values.migrations.args | nindent 12 }}
           env:
-            # --- Logger ---
-            - name: LOGGER_LEVEL
-              value: {{ .Values.server.logLevel | quote }}
-            # --- Database ---
             - name: DATABASE_HOST
               value: {{ include "admiral.database.host" . | quote }}
             - name: DATABASE_PORT
@@ -51,93 +48,10 @@ spec:
                   key: {{ include "admiral.database.secretKey" . }}
             - name: DATABASE_SSL_MODE
               value: {{ include "admiral.database.sslMode" . | quote }}
-            # --- OAuth2 (required by config validation) ---
-            - name: OAUTH2_NAME
-              value: {{ .Values.oauth2.name | quote }}
-            - name: OAUTH2_ISSUER
-              value: {{ include "admiral.oauth2.issuer" . | quote }}
-            - name: OAUTH2_CLIENT_ID
-              value: {{ .Values.oauth2.clientId | quote }}
-            - name: OAUTH2_CLIENT_SECRET
-              valueFrom:
-                secretKeyRef:
-                  name: {{ include "admiral.oauth2.secretName" . }}
-                  key: {{ .Values.oauth2.clientSecretKey | default "client-secret" }}
-            - name: OAUTH2_SCOPES
-              value: {{ .Values.oauth2.scopes | quote }}
-            - name: OAUTH2_REDIRECT_URL
-              value: {{ include "admiral.oauth2.redirectUrl" . | quote }}
-            - name: OAUTH2_SIGNING_SECRET
-              valueFrom:
-                secretKeyRef:
-                  name: {{ include "admiral.oauth2.secretName" . }}
-                  key: {{ .Values.oauth2.signingSecretKey | default "signing-secret" }}
-            - name: OAUTH2_REFRESH_TOKEN_TTL
-              value: {{ .Values.oauth2.refreshTokenTTL | quote }}
-            # --- Object Storage ---
-            - name: STORAGE_TYPE
-              value: {{ .Values.objectStorage.type | quote }}
-            {{- if eq .Values.objectStorage.type "s3" }}
-            - name: STORAGE_ENDPOINT
-              value: {{ include "admiral.objectStorage.endpoint" . | quote }}
-            - name: STORAGE_REGION
-              value: {{ .Values.objectStorage.s3.region | quote }}
-            - name: STORAGE_USE_SSL
-              value: {{ .Values.objectStorage.s3.useSSL | quote }}
-            - name: STORAGE_ACCESS_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: {{ include "admiral.objectStorage.secretName" . }}
-                  key: {{ include "admiral.objectStorage.accessKeyKey" . }}
-            - name: STORAGE_SECRET_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: {{ include "admiral.objectStorage.secretName" . }}
-                  key: {{ include "admiral.objectStorage.secretKeyKey" . }}
-            {{- end }}
-            {{- if eq .Values.objectStorage.type "gcs" }}
-            - name: GCS_PROJECT_ID
-              value: {{ .Values.objectStorage.gcs.projectId | quote }}
-            {{- if .Values.objectStorage.gcs.existingSecret }}
-            - name: GCS_CREDENTIALS_JSON
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.objectStorage.gcs.existingSecret }}
-                  key: {{ .Values.objectStorage.gcs.secretKey | default "credentials-json" }}
-            {{- end }}
-            {{- end }}
-            # --- Buckets ---
-            - name: MANIFEST_BUCKET_NAME
-              value: {{ .Values.buckets.manifests | quote }}
-            - name: REVISION_BUCKET_NAME
-              value: {{ .Values.buckets.revisions | quote }}
-            # --- Session ---
-            - name: SESSION_IDLE_TIMEOUT
-              value: {{ .Values.session.idleTimeout | quote }}
-            - name: SESSION_LIFETIME
-              value: {{ .Values.session.lifetime | quote }}
-            - name: SESSION_COOKIE_NAME
-              value: {{ .Values.session.cookie.name | quote }}
-            - name: SESSION_COOKIE_DOMAIN
-              value: {{ .Values.session.cookie.domain | quote }}
-            - name: SESSION_COOKIE_HTTP_ONLY
-              value: {{ .Values.session.cookie.httpOnly | quote }}
-            - name: SESSION_COOKIE_SAME_SITE
-              value: {{ .Values.session.cookie.sameSite | quote }}
-            - name: SESSION_COOKIE_SECURE
-              value: {{ .Values.session.cookie.secure | quote }}
-            - name: SESSION_COOKIE_PERSIST
-              value: {{ .Values.session.cookie.persist | quote }}
+            - name: LOGGER_LEVEL
+              value: {{ .Values.server.logLevel | quote }}
           {{- with .Values.migrations.resources }}
           resources:
             {{- toYaml . | nindent 12 }}
           {{- end }}
-          volumeMounts:
-            - name: config
-              mountPath: /etc/admiral
-              readOnly: true
-      volumes:
-        - name: config
-          configMap:
-            name: {{ include "admiral.fullname" . }}
 {{- end }}
