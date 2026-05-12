@@ -18,10 +18,6 @@ The charts published currently by this repository are the following:
 | [admiral-infra-agent](charts/admiral-infra-agent) | Alpha  | Connect infrastructure providers to the Admiral control plane           |
 | [admiral-k8s-agent](charts/admiral-k8s-agent)     | Alpha  | Connect a Kubernetes cluster to the Admiral control plane               |
 
-## Security Policy
-
-Please refer to [SECURITY.md](https://github.com/admiral-io/admiral-helm/blob/master/SECURITY.md) for details on how to report security issues.
-
 ## Changelog
 
 Releases are managed independently for each helm chart, and changelogs are tracked on each release.
