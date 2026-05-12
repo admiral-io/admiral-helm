@@ -61,3 +61,45 @@ Create the name of the service account to use
 {{- default "default" .Values.serviceAccount.name }}
 {{- end }}
 {{- end }}
+
+{{/* =======================================================================
+   Runner token secret helpers
+   ======================================================================= */}}
+
+{{/*
+Return the name of the secret holding the runner token.
+*/}}
+{{- define "admiral-k8s-agent.tokenSecretName" -}}
+{{- if .Values.agent.existingSecret }}
+{{- .Values.agent.existingSecret }}
+{{- else }}
+{{- printf "%s-token" (include "admiral-k8s-agent.fullname" .) }}
+{{- end }}
+{{- end }}
+
+{{/*
+Return the key within the token secret that holds the runner token.
+*/}}
+{{- define "admiral-k8s-agent.tokenSecretKey" -}}
+{{- if .Values.agent.existingSecret }}
+{{- .Values.agent.existingSecretKey | default "runner-token" }}
+{{- else }}
+{{- printf "runner-token" }}
+{{- end }}
+{{- end }}
+
+{{/* =======================================================================
+   Utility: tpl values render
+   ======================================================================= */}}
+
+{{/*
+Render a value that may contain template expressions.
+Usage: {{ include "admiral-k8s-agent.tplvalues.render" (dict "value" .Values.foo "context" $) }}
+*/}}
+{{- define "admiral-k8s-agent.tplvalues.render" -}}
+{{- if typeIs "string" .value }}
+{{- tpl .value .context }}
+{{- else }}
+{{- tpl (.value | toYaml) .context }}
+{{- end }}
+{{- end }}

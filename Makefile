@@ -1,33 +1,47 @@
-.PHONY: dev dev-down deps lint docs schema
+# Use bash as the shell, with environment lookup
+SHELL := /usr/bin/env bash
 
-## dev: Create a KinD cluster and install Admiral with demo values
+.DEFAULT_GOAL := all
+
+MAKEFLAGS += --no-print-directory --silent
+
+PROJECT_ROOT_DIR := $(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
+
+.PHONY: all # Build chart dependencies, docs, and schema (default target).
+all: deps docs schema
+
+.PHONY: help # Print this help message.
+help:
+	@grep -E '^\.PHONY: [a-zA-Z_-]+ .*?# .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = "(: |#)"}; {printf "%-30s %s\n", $$2, $$3}'
+
+.PHONY: dev # Create a KinD cluster and install Admiral with demo values.
 dev:
 	./scripts/demo.sh
 
-## dev-down: Delete the KinD cluster
+.PHONY: dev-down # Delete the KinD cluster.
 dev-down:
 	kind delete cluster --name admiral
 
-## deps: Build Helm chart dependencies
+.PHONY: deps # Build Helm chart dependencies.
 deps:
 	helm dependency build charts/admiral
 
-## lint: Run chart linting
+.PHONY: lint # Run chart linting.
 lint:
 	./scripts/lint.sh
 
-## docs: Generate chart documentation
+.PHONY: docs # Generate chart documentation.
 docs:
 	./scripts/helm-docs.sh
 
-## schema: Generate values JSON schema
+.PHONY: schema # Generate values JSON schema.
 schema:
 	./scripts/gen-schema.sh
 
-## template: Render chart templates locally (for debugging)
+.PHONY: template # Render chart templates locally (for debugging).
 template:
 	helm template admiral charts/admiral
 
-## template-kind: Render chart templates with KinD values
+.PHONY: template-kind # Render chart templates with KinD values.
 template-kind:
 	helm template admiral charts/admiral -f values/kind.yaml

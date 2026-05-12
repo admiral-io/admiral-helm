@@ -3,17 +3,13 @@ name: admiral
 description: Open source platform orchestrator that bridges IaC and app deployments. Dependency graph across the full stack, environment-aware config, and deterministic rollbacks.
 icon: https://charts.admiral.io/logo.png
 type: application
-version: 0.4.0
+version: 0.5.0
 appVersion: v0.0.1
 maintainers:
   - name: Admiral Contributors
     url: https://github.com/admiral-io/admiral-helm
 
 dependencies:
-  - name: postgresql
-    version: 18.5.14
-    repository: oci://registry-1.docker.io/bitnamicharts
-    condition: postgresql.enabled
   - name: minio
     version: 5.4.0
     repository: https://charts.min.io

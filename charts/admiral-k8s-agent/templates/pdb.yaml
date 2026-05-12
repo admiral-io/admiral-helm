@@ -1,0 +1,17 @@
+{{- if .Values.pdb.create }}
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ include "admiral-k8s-agent.fullname" . }}
+  labels:
+    {{- include "admiral-k8s-agent.labels" . | nindent 4 }}
+spec:
+  {{- if .Values.pdb.maxUnavailable }}
+  maxUnavailable: {{ .Values.pdb.maxUnavailable }}
+  {{- else }}
+  minAvailable: {{ .Values.pdb.minAvailable | default 1 }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "admiral-k8s-agent.selectorLabels" . | nindent 6 }}
+{{- end }}

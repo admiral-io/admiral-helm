@@ -1,0 +1,58 @@
+{{ template "chart.header" . }}
+
+{{ template "chart.badgesSection" . }}
+
+{{ template "chart.description" . }}
+
+## Overview
+
+The Admiral k8s-agent is a long-lived worker that polls the Admiral control plane for work, inspects the local Kubernetes cluster on its behalf, and reports results back. It exposes **no HTTP endpoints** — it is a pure client, so this chart deploys only a `Deployment` plus a few supporting resources (ServiceAccount, ClusterRole/Binding, Secret, optional PDB / NetworkPolicy / HPA).
+
+## Quick Start
+
+```bash
+helm install my-agent oci://ghcr.io/admiral-io/charts/admiral-k8s-agent \
+  --set agent.server=admiral.example.com:443 \
+  --set agent.token=adms_...
+```
+
+For production, reference the runner token via a pre-created Secret:
+
+```bash
+kubectl create secret generic admiral-runner-token \
+  --from-literal=runner-token=adms_...
+
+helm install my-agent oci://ghcr.io/admiral-io/charts/admiral-k8s-agent \
+  --set agent.server=admiral.example.com:443 \
+  --set agent.existingSecret=admiral-runner-token
+```
+
+## Cluster RBAC
+
+The agent needs cluster-wide read access to introspect workloads, networking, and discovery resources. The chart creates a `ClusterRole` and `ClusterRoleBinding` by default. To tighten or extend the default permission set, override `rbac.rules` wholesale — the list is **not** merged with the defaults:
+
+```yaml
+rbac:
+  create: true
+  rules:
+    - apiGroups: [""]
+      resources: ["pods", "namespaces"]
+      verbs: ["get", "list", "watch"]
+```
+
+To bind the agent to a ClusterRole you manage out-of-band, set `rbac.create: false` and create the binding yourself.
+
+## Protecting active work
+
+On `SIGTERM`, the agent stops claiming new work and drains in-flight operations before exiting. The chart sets `terminationGracePeriodSeconds: 60` by default. For production, also enable the PodDisruptionBudget:
+
+```yaml
+replicaCount: 2
+pdb:
+  create: true
+  minAvailable: 1
+```
+
+{{ template "chart.requirementsSection" . }}
+
+{{ template "chart.valuesSection" . }}

@@ -411,38 +411,65 @@ topologySpreadConstraints: []
   #     matchLabels: {}  # auto-populated with selectorLabels
 
 # =============================================================================
-# Database — PostgreSQL
+# Database — Postgres (built-in, dev/demo only)
 # =============================================================================
 
-# -- PostgreSQL subchart configuration
-# @default -- See subchart values
-postgresql:
-  # -- Deploy PostgreSQL subchart. Set to false to use an external database.
+# -- In-chart Postgres for dev/demo. NOT for production: single replica, no HA,
+# no automated backups, no PITR. Deployed as built-in templates (no subchart,
+# no operator) to keep the dev flow a single `helm install`.
+# Production deployments should leave this disabled and point `externalDatabase`
+# at a managed Postgres (RDS, Cloud SQL, AlloyDB) or a pre-existing cluster.
+postgres:
+  # -- Deploy in-chart Postgres
   enabled: false
+  # -- Container image
+  image:
+    repository: postgres
+    tag: "17-alpine"
+    pullPolicy: IfNotPresent
+  # -- Authentication and database bootstrap
   auth:
-    # -- Database name
+    # -- Database name (created on first start)
     database: admiral
-    # -- Database user
+    # -- Database user (created on first start, owns the database)
     username: admiral
-    # -- Database password (auto-generated if empty)
+    # -- Password (auto-generated when empty). Ignored when `existingSecret` is set.
     password: ""
-    # -- Name of existing secret containing the database password.
-    # Key must be `password` for the user and `postgres-password` for the admin.
+    # -- Name of existing Secret containing the database password
     existingSecret: ""
-  primary:
-    resources:
-      requests:
-        cpu: 100m
-        memory: 128Mi
-    persistence:
-      # -- Enable persistence using PVC
-      enabled: true
-      # -- PVC size for PostgreSQL data
-      size: 1Gi
-      # -- Storage class name. Leave empty for cluster default.
-      storageClass: ""
-      # -- Use an existing PVC instead of creating one
-      existingClaim: ""
+    # -- Key within `existingSecret` holding the password
+    existingSecretKey: password
+  # -- Service configuration
+  service:
+    # -- Service type (ClusterIP recommended; Postgres should not be exposed externally)
+    type: ClusterIP
+    # -- Service port
+    port: 5432
+  # -- Resource requests/limits
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+  # -- Persistence configuration. On by default — dev data should survive pod restarts.
+  persistence:
+    # -- Enable persistence using PVC
+    enabled: true
+    # -- PVC size
+    size: 1Gi
+    # -- Storage class. Leave empty for cluster default.
+    storageClass: ""
+    # -- Use an existing PVC instead of creating one
+    existingClaim: ""
+  # -- Pod security context
+  podSecurityContext: {}
+  # -- Container security context
+  securityContext: {}
+  # -- Node selector for the Postgres pod
+  nodeSelector: {}
+  # -- Tolerations for the Postgres pod
+  tolerations: []
+  # -- Affinity rules for the Postgres pod
+  affinity: {}
 
 # -- External database configuration (used when postgresql.enabled=false)
 # Pattern: Bitnami Gitea/Airflow
@@ -518,7 +545,10 @@ dex:
   # -- Dex container image
   image:
     repository: ghcr.io/dexidp/dex
-    tag: latest
+    # Pinned: :latest floats forward to nightlies. Bump deliberately when
+    # validating new versions — Dex 2.46 introduced CRDs and a fail-init
+    # crdHandling default that requires matching RBAC.
+    tag: v2.45.1
     pullPolicy: IfNotPresent
   # -- Dex configuration. Rendered as a ConfigMap.
   # staticClients and staticPasswords are auto-managed by chart templates.
@@ -557,3 +587,62 @@ dex:
     # -- Create a service account for Dex
     create: true
     annotations: {}
+
+# =============================================================================
+# Redis (built-in, dev/demo only)
+# =============================================================================
+
+# -- In-chart Redis for dev/demo. NOT for production: single replica, no HA,
+# no persistence by default. Deployed as built-in templates (no subchart).
+# Production deployments should use a managed Redis (ElastiCache, MemoryStore)
+# or a dedicated operator (e.g., redis-operator, KubeBlocks).
+redis:
+  # -- Deploy Redis
+  enabled: false
+  # -- Redis container image
+  image:
+    repository: redis
+    tag: "7-alpine"
+    pullPolicy: IfNotPresent
+  # -- Redis authentication
+  auth:
+    # -- Require AUTH password. Set false only in trusted demo environments.
+    enabled: true
+    # -- Password (auto-generated when empty and redis.enabled=true). Ignored
+    # when `existingSecret` is set.
+    password: ""
+    # -- Name of existing Secret containing the Redis password
+    existingSecret: ""
+    # -- Key within `existingSecret` holding the password
+    existingSecretKey: redis-password
+  # -- Service configuration
+  service:
+    # -- Service type (ClusterIP recommended; Redis should not be exposed externally)
+    type: ClusterIP
+    # -- Service port
+    port: 6379
+  # -- Resource requests/limits for Redis
+  resources:
+    requests:
+      cpu: 25m
+      memory: 32Mi
+  # -- Persistence configuration. Off by default — dev/demo cache is ephemeral.
+  persistence:
+    # -- Enable persistence using PVC
+    enabled: false
+    # -- PVC size
+    size: 256Mi
+    # -- Storage class. Leave empty for cluster default.
+    storageClass: ""
+    # -- Use an existing PVC instead of creating one
+    existingClaim: ""
+  # -- Pod security context
+  podSecurityContext: {}
+  # -- Container security context
+  securityContext: {}
+  # -- Node selector for Redis pod
+  nodeSelector: {}
+  # -- Tolerations for Redis pod
+  tolerations: []
+  # -- Affinity rules for Redis pod
+  affinity: {}

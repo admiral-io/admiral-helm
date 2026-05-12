@@ -1,9 +1,6 @@
 dependencies:
-- name: postgresql
-  repository: oci://registry-1.docker.io/bitnamicharts
-  version: 18.5.14
 - name: minio
   repository: https://charts.min.io
   version: 5.4.0
-digest: sha256:2d6e7a2aadf61294355be8b2409f73ac909b2a5db4b777a1832f2af72a32f621
-generated: "2026-04-10T11:43:43.0319-04:00"
+digest: sha256:f73b99b9e00c8a4512fdc3e54a2278ab74503ac9c7455a03f99c4b00a20cb0eb
+generated: "2026-05-11T23:34:26.355345-04:00"

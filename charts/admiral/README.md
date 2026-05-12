@@ -1,6 +1,6 @@
 # admiral
 
-![Version: 0.4.0](https://img.shields.io/badge/Version-0.4.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: v0.0.1](https://img.shields.io/badge/AppVersion-v0.0.1-informational?style=flat-square)
+![Version: 0.5.0](https://img.shields.io/badge/Version-0.5.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: v0.0.1](https://img.shields.io/badge/AppVersion-v0.0.1-informational?style=flat-square)
 
 Open source platform orchestrator that bridges IaC and app deployments. Dependency graph across the full stack, environment-aware config, and deterministic rollbacks.
 
@@ -54,7 +54,6 @@ helm install admiral charts/admiral -f my-values.yaml
 | Repository | Name | Version |
 |------------|------|---------|
 | https://charts.min.io | minio | 5.4.0 |
-| oci://registry-1.docker.io/bitnamicharts | postgresql | 18.5.14 |
 
 ## Values
 
@@ -190,17 +189,52 @@ helm install admiral charts/admiral -f my-values.yaml
 | podAnnotations | object | `{}` | Annotations to add to pods |
 | podLabels | object | `{}` | Labels to add to pods |
 | podSecurityContext | object | `{}` | Pod security context |
-| postgresql | object | See subchart values | PostgreSQL subchart configuration |
-| postgresql.auth.database | string | `"admiral"` | Database name |
-| postgresql.auth.existingSecret | string | `""` | Name of existing secret containing the database password. Key must be `password` for the user and `postgres-password` for the admin. |
-| postgresql.auth.password | string | `""` | Database password (auto-generated if empty) |
-| postgresql.auth.username | string | `"admiral"` | Database user |
-| postgresql.enabled | bool | `false` | Deploy PostgreSQL subchart. Set to false to use an external database. |
-| postgresql.primary.persistence.enabled | bool | `true` | Enable persistence using PVC |
-| postgresql.primary.persistence.existingClaim | string | `""` | Use an existing PVC instead of creating one |
-| postgresql.primary.persistence.size | string | `"1Gi"` | PVC size for PostgreSQL data |
-| postgresql.primary.persistence.storageClass | string | `""` | Storage class name. Leave empty for cluster default. |
+| postgres | object | `{"affinity":{},"auth":{"database":"admiral","existingSecret":"","existingSecretKey":"password","password":"","username":"admiral"},"enabled":false,"image":{"pullPolicy":"IfNotPresent","repository":"postgres","tag":"17-alpine"},"nodeSelector":{},"persistence":{"enabled":true,"existingClaim":"","size":"1Gi","storageClass":""},"podSecurityContext":{},"resources":{"requests":{"cpu":"100m","memory":"128Mi"}},"securityContext":{},"service":{"port":5432,"type":"ClusterIP"},"tolerations":[]}` | In-chart Postgres for dev/demo. NOT for production: single replica, no HA, no automated backups, no PITR. Deployed as built-in templates (no subchart, no operator) to keep the dev flow a single `helm install`. Production deployments should leave this disabled and point `externalDatabase` at a managed Postgres (RDS, Cloud SQL, AlloyDB) or a pre-existing cluster. |
+| postgres.affinity | object | `{}` | Affinity rules for the Postgres pod |
+| postgres.auth | object | `{"database":"admiral","existingSecret":"","existingSecretKey":"password","password":"","username":"admiral"}` | Authentication and database bootstrap |
+| postgres.auth.database | string | `"admiral"` | Database name (created on first start) |
+| postgres.auth.existingSecret | string | `""` | Name of existing Secret containing the database password |
+| postgres.auth.existingSecretKey | string | `"password"` | Key within `existingSecret` holding the password |
+| postgres.auth.password | string | `""` | Password (auto-generated when empty). Ignored when `existingSecret` is set. |
+| postgres.auth.username | string | `"admiral"` | Database user (created on first start, owns the database) |
+| postgres.enabled | bool | `false` | Deploy in-chart Postgres |
+| postgres.image | object | `{"pullPolicy":"IfNotPresent","repository":"postgres","tag":"17-alpine"}` | Container image |
+| postgres.nodeSelector | object | `{}` | Node selector for the Postgres pod |
+| postgres.persistence | object | `{"enabled":true,"existingClaim":"","size":"1Gi","storageClass":""}` | Persistence configuration. On by default — dev data should survive pod restarts. |
+| postgres.persistence.enabled | bool | `true` | Enable persistence using PVC |
+| postgres.persistence.existingClaim | string | `""` | Use an existing PVC instead of creating one |
+| postgres.persistence.size | string | `"1Gi"` | PVC size |
+| postgres.persistence.storageClass | string | `""` | Storage class. Leave empty for cluster default. |
+| postgres.podSecurityContext | object | `{}` | Pod security context |
+| postgres.resources | object | `{"requests":{"cpu":"100m","memory":"128Mi"}}` | Resource requests/limits |
+| postgres.securityContext | object | `{}` | Container security context |
+| postgres.service | object | `{"port":5432,"type":"ClusterIP"}` | Service configuration |
+| postgres.service.port | int | `5432` | Service port |
+| postgres.service.type | string | `"ClusterIP"` | Service type (ClusterIP recommended; Postgres should not be exposed externally) |
+| postgres.tolerations | list | `[]` | Tolerations for the Postgres pod |
 | readinessProbe | object | `{"httpGet":{"path":"/readyz","port":"http"},"initialDelaySeconds":5,"periodSeconds":5}` | Readiness probe configuration |
+| redis | object | `{"affinity":{},"auth":{"enabled":true,"existingSecret":"","existingSecretKey":"redis-password","password":""},"enabled":false,"image":{"pullPolicy":"IfNotPresent","repository":"redis","tag":"7-alpine"},"nodeSelector":{},"persistence":{"enabled":false,"existingClaim":"","size":"256Mi","storageClass":""},"podSecurityContext":{},"resources":{"requests":{"cpu":"25m","memory":"32Mi"}},"securityContext":{},"service":{"port":6379,"type":"ClusterIP"},"tolerations":[]}` | In-chart Redis for dev/demo. NOT for production: single replica, no HA, no persistence by default. Deployed as built-in templates (no subchart). Production deployments should use a managed Redis (ElastiCache, MemoryStore) or a dedicated operator (e.g., redis-operator, KubeBlocks). |
+| redis.affinity | object | `{}` | Affinity rules for Redis pod |
+| redis.auth | object | `{"enabled":true,"existingSecret":"","existingSecretKey":"redis-password","password":""}` | Redis authentication |
+| redis.auth.enabled | bool | `true` | Require AUTH password. Set false only in trusted demo environments. |
+| redis.auth.existingSecret | string | `""` | Name of existing Secret containing the Redis password |
+| redis.auth.existingSecretKey | string | `"redis-password"` | Key within `existingSecret` holding the password |
+| redis.auth.password | string | `""` | Password (auto-generated when empty and redis.enabled=true). Ignored when `existingSecret` is set. |
+| redis.enabled | bool | `false` | Deploy Redis |
+| redis.image | object | `{"pullPolicy":"IfNotPresent","repository":"redis","tag":"7-alpine"}` | Redis container image |
+| redis.nodeSelector | object | `{}` | Node selector for Redis pod |
+| redis.persistence | object | `{"enabled":false,"existingClaim":"","size":"256Mi","storageClass":""}` | Persistence configuration. Off by default — dev/demo cache is ephemeral. |
+| redis.persistence.enabled | bool | `false` | Enable persistence using PVC |
+| redis.persistence.existingClaim | string | `""` | Use an existing PVC instead of creating one |
+| redis.persistence.size | string | `"256Mi"` | PVC size |
+| redis.persistence.storageClass | string | `""` | Storage class. Leave empty for cluster default. |
+| redis.podSecurityContext | object | `{}` | Pod security context |
+| redis.resources | object | `{"requests":{"cpu":"25m","memory":"32Mi"}}` | Resource requests/limits for Redis |
+| redis.securityContext | object | `{}` | Container security context |
+| redis.service | object | `{"port":6379,"type":"ClusterIP"}` | Service configuration |
+| redis.service.port | int | `6379` | Service port |
+| redis.service.type | string | `"ClusterIP"` | Service type (ClusterIP recommended; Redis should not be exposed externally) |
+| redis.tolerations | list | `[]` | Tolerations for Redis pod |
 | replicaCount | int | `1` | Number of replicas for the admiral server deployment |
 | resources | object | `{}` | Resource requests/limits for the admiral server |
 | securityContext | object | `{}` | Container security context |

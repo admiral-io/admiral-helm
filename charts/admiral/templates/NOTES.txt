@@ -57,9 +57,9 @@
     oauth2.existingSecret=your-oidc-secret
 {{- end }}
 
-{{- if .Values.postgresql.enabled }}
+{{- if .Values.postgres.enabled }}
 
-  Database: Built-in PostgreSQL (demo mode)
+  Database: Built-in Postgres (demo mode)
 {{- else }}
   Database: External ({{ .Values.externalDatabase.host }}:{{ .Values.externalDatabase.port }})
 {{- end }}

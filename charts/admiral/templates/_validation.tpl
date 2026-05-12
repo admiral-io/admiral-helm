@@ -4,10 +4,10 @@ Produces clear error messages when required settings are missing.
 */}}
 {{- define "admiral.validateValues" -}}
 
-{{/* --- Database: must have either subchart or external config --- */}}
-{{- if not .Values.postgresql.enabled }}
+{{/* --- Database: must have either in-chart Postgres or external config --- */}}
+{{- if not .Values.postgres.enabled }}
   {{- if not .Values.externalDatabase.host }}
-    {{- fail "\n\nADMIRAL CONFIGURATION ERROR:\n  A database is required. Either:\n    1. Enable the built-in PostgreSQL:  postgresql.enabled=true\n    2. Configure an external database:  externalDatabase.host=<hostname>\n\n  For local development, use:  helm install admiral ./charts/admiral -f values/kind.yaml\n" }}
+    {{- fail "\n\nADMIRAL CONFIGURATION ERROR:\n  A database is required. Either:\n    1. Enable the built-in Postgres:    postgres.enabled=true\n       (dev/demo only — single replica, no HA, no backups)\n    2. Configure an external database:  externalDatabase.host=<hostname>\n\n  For local development, use:  helm install admiral ./charts/admiral -f charts/admiral/demo-values.yaml\n" }}
   {{- end }}
 {{- end }}
 
@@ -32,7 +32,7 @@ Produces clear error messages when required settings are missing.
 {{- end }}
 
 {{/* --- External DB: password must be provided somehow --- */}}
-{{- if and (not .Values.postgresql.enabled) .Values.externalDatabase.host }}
+{{- if and (not .Values.postgres.enabled) .Values.externalDatabase.host }}
   {{- if and (not .Values.externalDatabase.existingSecret) (not .Values.externalDatabase.password) }}
     {{- fail "\n\nADMIRAL CONFIGURATION ERROR:\n  External database password is required. Either:\n    1. Provide a secret:   externalDatabase.existingSecret=<secret-name>\n    2. Set inline:         externalDatabase.password=<password>\n" }}
   {{- end }}

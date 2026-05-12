@@ -1,3 +1,4 @@
+{{- include "admiral-k8s-agent.validateValues" . }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -28,9 +29,14 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       serviceAccountName: {{ include "admiral-k8s-agent.serviceAccountName" . }}
+      terminationGracePeriodSeconds: {{ .Values.terminationGracePeriodSeconds }}
       {{- with .Values.podSecurityContext }}
       securityContext:
         {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.initContainers }}
+      initContainers:
+        {{- include "admiral-k8s-agent.tplvalues.render" (dict "value" . "context" $) | nindent 8 }}
       {{- end }}
       containers:
         - name: {{ .Chart.Name }}
@@ -40,10 +46,41 @@ spec:
           {{- end }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
-          ports:
-            - name: http
-              containerPort: {{ .Values.service.port }}
-              protocol: TCP
+          args:
+            - run
+            {{- with .Values.agent.extraArgs }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          env:
+            - name: ADMIRAL_SERVER
+              value: {{ .Values.agent.server | quote }}
+            - name: ADMIRAL_RUNNER_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "admiral-k8s-agent.tokenSecretName" . }}
+                  key: {{ include "admiral-k8s-agent.tokenSecretKey" . }}
+            - name: ADMIRAL_POLL_INTERVAL
+              value: {{ .Values.agent.pollInterval | quote }}
+            - name: ADMIRAL_INSECURE
+              value: {{ .Values.agent.insecure | quote }}
+            {{- if .Values.agent.verbose }}
+            - name: ADMIRAL_VERBOSE
+              value: "true"
+            {{- end }}
+            {{- with .Values.extraEnvVars }}
+            {{- include "admiral-k8s-agent.tplvalues.render" (dict "value" . "context" $) | nindent 12 }}
+            {{- end }}
+          {{- if or .Values.extraEnvVarsCM .Values.extraEnvVarsSecret }}
+          envFrom:
+            {{- if .Values.extraEnvVarsCM }}
+            - configMapRef:
+                name: {{ include "admiral-k8s-agent.tplvalues.render" (dict "value" .Values.extraEnvVarsCM "context" $) }}
+            {{- end }}
+            {{- if .Values.extraEnvVarsSecret }}
+            - secretRef:
+                name: {{ include "admiral-k8s-agent.tplvalues.render" (dict "value" .Values.extraEnvVarsSecret "context" $) }}
+            {{- end }}
+          {{- end }}
           {{- with .Values.livenessProbe }}
           livenessProbe:
             {{- toYaml . | nindent 12 }}
@@ -58,11 +95,14 @@ spec:
           {{- end }}
           {{- with .Values.extraVolumeMounts }}
           volumeMounts:
-            {{- toYaml . | nindent 12 }}
+            {{- include "admiral-k8s-agent.tplvalues.render" (dict "value" . "context" $) | nindent 12 }}
           {{- end }}
+        {{- with .Values.sidecars }}
+        {{- include "admiral-k8s-agent.tplvalues.render" (dict "value" . "context" $) | nindent 8 }}
+        {{- end }}
       {{- with .Values.extraVolumes }}
       volumes:
-        {{- toYaml . | nindent 8 }}
+        {{- include "admiral-k8s-agent.tplvalues.render" (dict "value" . "context" $) | nindent 8 }}
       {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:

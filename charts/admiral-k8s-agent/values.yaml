@@ -1,158 +1,313 @@
 # Default values for admiral-k8s-agent.
 # This is a YAML-formatted file.
-# Declare variables to be passed into your templates.
 
-# This will set the replicaset count more information can be found here: https://kubernetes.io/docs/concepts/workloads/controllers/replicaset/
+# -- Number of replicas for the k8s-agent deployment. Each replica independently
+# polls the Admiral control plane, so more replicas = more concurrent capacity.
 replicaCount: 1
 
-# This sets the container image more information can be found here: https://kubernetes.io/docs/concepts/containers/images/
+# -- Container image configuration
 image:
-  repository: nginx
-  # This sets the pull policy for images.
+  # -- Image repository
+  repository: ghcr.io/admiral-io/admiral-k8s-agent
+  # -- Image pull policy
   pullPolicy: IfNotPresent
-  # Overrides the image tag whose default is the chart appVersion.
+  # -- Overrides the image tag whose default is the chart appVersion
   tag: ""
 
-# This is for the secrets for pulling an image from a private repository more information can be found here: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
+# -- Image pull secrets for private registries
 imagePullSecrets: []
-# This is to override the chart name.
+# -- Override the chart name
 nameOverride: ""
+# -- Override the full release name
 fullnameOverride: ""
 
-# This section builds out the service account more information can be found here: https://kubernetes.io/docs/concepts/security/service-accounts/
+# =============================================================================
+# Agent Configuration
+# =============================================================================
+
+# -- Admiral k8s-agent runtime configuration.
+# Maps directly to the binary's flags and env vars (see `admiral-k8s-agent run --help`).
+agent:
+  # -- Admiral control-plane address (host:port). Maps to ADMIRAL_SERVER / --server.
+  # Required.
+  server: ""
+  # -- Runner SAT token (adms_...). Maps to ADMIRAL_RUNNER_TOKEN / --token.
+  # Prefer `existingSecret` for production. If set here, a Secret is generated.
+  token: ""
+  # -- Name of an existing Secret containing the runner token. Takes precedence
+  # over `token`. The Secret must contain the key given by `existingSecretKey`.
+  existingSecret: ""
+  # -- Key within `existingSecret` that holds the runner token
+  existingSecretKey: runner-token
+  # -- How often to poll for new work when idle. Maps to --poll-interval.
+  pollInterval: 5s
+  # -- Skip TLS verification against the Admiral server (plaintext gRPC + HTTP).
+  # Only enable for local/dev clusters. Maps to --insecure.
+  insecure: false
+  # -- Enable verbose (debug) logging. Maps to --verbose.
+  verbose: false
+  # -- Additional CLI args appended to the `run` subcommand
+  extraArgs: []
+
+# =============================================================================
+# ServiceAccount (Workload Identity / IRSA)
+# =============================================================================
+
+# -- Service account configuration.
+# To grant the agent cloud-provider permissions without mounting long-lived
+# credentials, set the corresponding annotation and the cloud SDK will pick up
+# tokens automatically.
 serviceAccount:
-  # Specifies whether a service account should be created.
+  # -- Create a service account
   create: true
-  # Automatically mount a ServiceAccount's API credentials?
+  # -- Automatically mount the service account token.
+  # Must stay true for EKS IRSA and GKE Workload Identity to work.
   automount: true
-  # Annotations to add to the service account.
+  # -- Annotations to add to the service account.
+  #
+  # EKS IRSA:
+  #   eks.amazonaws.com/role-arn: "arn:aws:iam::123456789012:role/admiral-k8s-agent"
+  #
+  # GKE Workload Identity:
+  #   iam.gke.io/gcp-service-account: "admiral-k8s-agent@PROJECT.iam.gserviceaccount.com"
+  #
+  # Azure Workload Identity (requires pod label azure.workload.identity/use: "true"):
+  #   azure.workload.identity/client-id: "CLIENT_ID"
   annotations: {}
-  # The name of the service account to use.
+  # -- The name of the service account to use.
   # If not set and create is true, a name is generated using the fullname template.
   name: ""
 
-# This is for setting Kubernetes Annotations to a Pod.
-# For more information checkout: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations/
+# =============================================================================
+# RBAC
+# =============================================================================
+
+# -- Cluster RBAC for the agent.
+# The k8s-agent inspects cluster state on behalf of the Admiral control plane,
+# so it needs cluster-wide read access to a broad set of resources by default.
+# Override `rules` to tighten or extend permissions.
+rbac:
+  # -- Create the ClusterRole and ClusterRoleBinding
+  create: true
+  # -- Rules for the ClusterRole. Default: cluster-wide read-only on the most
+  # common workload, networking, and discovery resources. Replace entirely to
+  # customise — values are NOT merged with the defaults.
+  rules:
+    - apiGroups: [""]
+      resources:
+        - configmaps
+        - endpoints
+        - events
+        - namespaces
+        - nodes
+        - persistentvolumeclaims
+        - persistentvolumes
+        - pods
+        - pods/log
+        - replicationcontrollers
+        - resourcequotas
+        - secrets
+        - serviceaccounts
+        - services
+      verbs: ["get", "list", "watch"]
+    - apiGroups: ["apps"]
+      resources:
+        - daemonsets
+        - deployments
+        - replicasets
+        - statefulsets
+      verbs: ["get", "list", "watch"]
+    - apiGroups: ["batch"]
+      resources:
+        - cronjobs
+        - jobs
+      verbs: ["get", "list", "watch"]
+    - apiGroups: ["networking.k8s.io"]
+      resources:
+        - ingresses
+        - ingressclasses
+        - networkpolicies
+      verbs: ["get", "list", "watch"]
+    - apiGroups: ["gateway.networking.k8s.io"]
+      resources:
+        - gateways
+        - gatewayclasses
+        - httproutes
+      verbs: ["get", "list", "watch"]
+    - apiGroups: ["policy"]
+      resources:
+        - poddisruptionbudgets
+      verbs: ["get", "list", "watch"]
+    - apiGroups: ["autoscaling"]
+      resources:
+        - horizontalpodautoscalers
+      verbs: ["get", "list", "watch"]
+    - apiGroups: ["storage.k8s.io"]
+      resources:
+        - storageclasses
+        - volumeattachments
+      verbs: ["get", "list", "watch"]
+    - apiGroups: ["rbac.authorization.k8s.io"]
+      resources:
+        - clusterroles
+        - clusterrolebindings
+        - roles
+        - rolebindings
+      verbs: ["get", "list", "watch"]
+    - apiGroups: ["apiextensions.k8s.io"]
+      resources:
+        - customresourcedefinitions
+      verbs: ["get", "list", "watch"]
+
+# =============================================================================
+# Pod Configuration
+# =============================================================================
+
+# -- Annotations to add to pods
 podAnnotations: {}
-# This is for setting Kubernetes Labels to a Pod.
-# For more information checkout: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/
+
+# -- Labels to add to pods.
+# Set `azure.workload.identity/use: "true"` here when using Azure Workload Identity.
 podLabels: {}
 
+# -- Pod security context
 podSecurityContext: {}
-  # fsGroup: 2000
+  # fsGroup: 65532
 
+# -- Container security context.
+# The image already runs as uid/gid 65532 (nonroot).
 securityContext: {}
   # capabilities:
   #   drop:
   #   - ALL
   # readOnlyRootFilesystem: true
   # runAsNonRoot: true
-  # runAsUser: 1000
+  # runAsUser: 65532
+  # runAsGroup: 65532
 
-# This is for setting up a service more information can be found here: https://kubernetes.io/docs/concepts/services-networking/service/
-service:
-  # This sets the service type more information can be found here: https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services-service-types
-  type: ClusterIP
-  # This sets the ports more information can be found here: https://kubernetes.io/docs/concepts/services-networking/service/#field-spec-ports
-  port: 80
+# -- Grace period for the pod to finish in-flight work on SIGTERM before
+# Kubernetes force-kills it. The agent drains active operations before exiting.
+terminationGracePeriodSeconds: 60
 
-# This block is for setting up the ingress for more information can be found here: https://kubernetes.io/docs/concepts/services-networking/ingress/
-ingress:
-  enabled: false
-  className: ""
-  annotations: {}
-    # kubernetes.io/ingress.class: nginx
-    # kubernetes.io/tls-acme: "true"
-  hosts:
-    - host: chart-example.local
-      paths:
-        - path: /
-          pathType: ImplementationSpecific
-  tls: []
-    # - secretName: chart-example-tls
-    #   hosts:
-    #     - chart-example.local
+# =============================================================================
+# Resources & Probes
+# =============================================================================
 
-# -- Expose the service via gateway-api HTTPRoute
-# Requires Gateway API resources and suitable controller installed within the cluster
-# (see: https://gateway-api.sigs.k8s.io/guides/)
-httpRoute:
-  # HTTPRoute enabled.
-  enabled: false
-  # HTTPRoute annotations.
-  annotations: {}
-  # Which Gateways this Route is attached to.
-  parentRefs:
-  - name: gateway
-    sectionName: http
-    # namespace: default
-  # Hostnames matching HTTP header.
-  hostnames:
-  - chart-example.local
-  # List of rules and filters applied.
-  rules:
-  - matches:
-    - path:
-        type: PathPrefix
-        value: /headers
-  #   filters:
-  #   - type: RequestHeaderModifier
-  #     requestHeaderModifier:
-  #       set:
-  #       - name: My-Overwrite-Header
-  #         value: this-is-the-only-value
-  #       remove:
-  #       - User-Agent
-  # - matches:
-  #   - path:
-  #       type: PathPrefix
-  #       value: /echo
-  #     headers:
-  #     - name: version
-  #       value: v2
-
+# -- Resource requests/limits.
 resources: {}
-  # We usually recommend not to specify default resources and to leave this as a conscious
-  # choice for the user. This also increases chances charts run on environments with little
-  # resources, such as Minikube. If you do want to specify resources, uncomment the following
-  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
   # limits:
-  #   cpu: 100m
-  #   memory: 128Mi
+  #   cpu: 500m
+  #   memory: 512Mi
   # requests:
   #   cpu: 100m
   #   memory: 128Mi
 
-# This is to setup the liveness and readiness probes more information can be found here: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/
-livenessProbe:
-  httpGet:
-    path: /
-    port: http
-readinessProbe:
-  httpGet:
-    path: /
-    port: http
+# -- Liveness probe. The agent exposes no HTTP endpoint, so use an exec probe.
+# Disabled by default because an unresponsive agent is still useful (it will
+# finish its current work) and probe failures force-kill the process.
+livenessProbe: {}
+  # exec:
+  #   command:
+  #     - pgrep
+  #     - admiral-k8s-agent
+  # initialDelaySeconds: 30
+  # periodSeconds: 30
+  # failureThreshold: 3
 
-# This section is for setting up autoscaling more information can be found here: https://kubernetes.io/docs/concepts/workloads/autoscaling/
+# -- Readiness probe. The agent is a poll-based client and has no concept of
+# "not ready to serve traffic", so this is rarely needed.
+readinessProbe: {}
+
+# =============================================================================
+# Autoscaling
+# =============================================================================
+
+# -- Horizontal Pod Autoscaler configuration.
 autoscaling:
+  # -- Enable HPA
   enabled: false
+  # -- Minimum replicas
   minReplicas: 1
-  maxReplicas: 100
+  # -- Maximum replicas
+  maxReplicas: 10
+  # -- Target CPU utilization percentage
   targetCPUUtilizationPercentage: 80
   # targetMemoryUtilizationPercentage: 80
 
-# -- Extra volumes for the pod
-extraVolumes: []
-  # - name: foo
-  #   secret:
-  #     secretName: mysecret
-  #     optional: false
+# =============================================================================
+# Pod Disruption Budget
+# =============================================================================
 
-# -- Extra volume mounts for the container
+# -- Pod Disruption Budget.
+# Recommended for production: protects active operations from voluntary
+# evictions (node drains, cluster upgrades). Note that with replicaCount=1 a
+# PDB with minAvailable=1 will block node drains entirely — run at least 2
+# replicas, or use `maxUnavailable: 1` instead.
+pdb:
+  # -- Create a PDB resource
+  create: false
+  # -- Minimum number of available pods
+  minAvailable: 1
+  # -- Maximum number of unavailable pods
+  maxUnavailable: ""
+
+# =============================================================================
+# Network Policy
+# =============================================================================
+
+# -- Network Policy configuration.
+# The agent only needs egress (DNS, Admiral control plane, Kubernetes API).
+# Ingress is not required.
+networkPolicy:
+  # -- Enable NetworkPolicy
+  enabled: false
+  # -- Allow outbound connections to any destination. Set false to restrict to
+  # explicit destinations; then use `extraEgress` to whitelist Admiral, the
+  # Kubernetes API server, etc.
+  allowExternalEgress: true
+  # -- Additional egress rules
+  extraEgress: []
+  # -- Additional ingress rules (usually none for a worker)
+  extraIngress: []
+
+# =============================================================================
+# Extensibility
+# =============================================================================
+
+# -- Extra environment variables for the agent container.
+#   - name: HTTPS_PROXY
+#     value: http://proxy.example.com:3128
+extraEnvVars: []
+
+# -- Name of a ConfigMap containing extra environment variables (envFrom)
+extraEnvVarsCM: ""
+
+# -- Name of a Secret containing extra environment variables (envFrom).
+# Prefer IRSA/Workload Identity via serviceAccount.annotations over static keys.
+extraEnvVarsSecret: ""
+
+# -- Extra volumes for the agent pod.
+extraVolumes: []
+  # - name: ca-bundle
+  #   configMap:
+  #     name: corp-ca-bundle
+
+# -- Extra volume mounts for the agent container.
 extraVolumeMounts: []
-  # - name: foo
-  #   mountPath: "/etc/foo"
+  # - name: ca-bundle
+  #   mountPath: /etc/ssl/certs/corp-ca.pem
+  #   subPath: ca.pem
   #   readOnly: true
+
+# -- Extra init containers for the agent pod
+initContainers: []
+
+# -- Extra sidecar containers for the agent pod
+sidecars: []
+
+# =============================================================================
+# Scheduling
+# =============================================================================
 
 # -- Node selector for pod assignment
 nodeSelector: {}
@@ -165,3 +320,8 @@ affinity: {}
 
 # -- Topology spread constraints for pod distribution across zones/nodes
 topologySpreadConstraints: []
+  # - maxSkew: 1
+  #   topologyKey: topology.kubernetes.io/zone
+  #   whenUnsatisfiable: DoNotSchedule
+  #   labelSelector:
+  #     matchLabels: {}  # auto-populated with selectorLabels

@@ -21,22 +21,34 @@ server:
   logLevel: debug
   enablePprof: true
 
-# --- Database (built-in PostgreSQL) ---
-postgresql:
+# --- Database (built-in Postgres) ---
+postgres:
   enabled: true
   auth:
     database: admiral
     username: admiral
     password: "shipitnow"
-  primary:
-    resources:
-      requests:
-        cpu: 50m
-        memory: 64Mi
-      limits:
-        memory: 256Mi
-    persistence:
-      size: 512Mi
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      memory: 256Mi
+  persistence:
+    size: 512Mi
+
+# --- Cache (built-in Redis, dev only) ---
+redis:
+  enabled: true
+  auth:
+    enabled: true
+    password: "shipitnow"
+  resources:
+    requests:
+      cpu: 25m
+      memory: 32Mi
+    limits:
+      memory: 64Mi
 
 # --- Object Storage (built-in MinIO) ---
 minio:

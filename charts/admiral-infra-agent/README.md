@@ -72,8 +72,8 @@ pdb:
 | extraEnvVars | list | `[]` | Extra environment variables for the agent container. Use this for cloud credentials that Terraform will pick up:   - name: AWS_REGION     value: us-east-1   - name: VAULT_ADDR     value: https://vault.example.com |
 | extraEnvVarsCM | string | `""` | Name of a ConfigMap containing extra environment variables (envFrom) |
 | extraEnvVarsSecret | string | `""` | Name of a Secret containing extra environment variables (envFrom). Common pattern: put AWS_ACCESS_KEY_ID/AWS_SECRET_ACCESS_KEY or VAULT_TOKEN here. Prefer IRSA/Workload Identity via serviceAccount.annotations over static keys. |
-| extraVolumeMounts | list | `[]` | Extra volume mounts for the agent container. |
-| extraVolumes | list | `[]` | Extra volumes for the agent pod. Example: mount a Secret containing ~/.aws/credentials or a kubeconfig. |
+| extraVolumeMounts | list | `[]` | Extra volume mounts for the agent container. Pair each mount with an `extraEnvVars` entry pointing the relevant SDK at the absolute mount path (see note on `extraVolumes` above). |
+| extraVolumes | list | `[]` | Extra volumes for the agent pod. Common use case: mount a Secret holding cloud-provider credentials.  IMPORTANT: the agent rewrites $HOME to a per-job tempdir before each terraform invocation (cleanup-boundary scoping), so SDK defaults like ~/.aws/credentials or ~/.config/gcloud/application_default_credentials.json will NOT be visible to terraform. Mount at a fixed absolute path and point the matching SDK env var at it via `extraEnvVars`:   - AWS_SHARED_CREDENTIALS_FILE   for AWS   - GOOGLE_APPLICATION_CREDENTIALS for GCP   - KUBECONFIG                     for kubectl/helm providers |
 | fullnameOverride | string | `""` | Override the full release name |
 | image | object | `{"pullPolicy":"IfNotPresent","repository":"ghcr.io/admiral-io/admiral-infra-agent","tag":""}` | Container image configuration |
 | image.pullPolicy | string | `"IfNotPresent"` | Image pull policy |

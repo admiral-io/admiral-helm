@@ -232,17 +232,31 @@ extraEnvVarsCM: ""
 extraEnvVarsSecret: ""
 
 # -- Extra volumes for the agent pod.
-# Example: mount a Secret containing ~/.aws/credentials or a kubeconfig.
+# Common use case: mount a Secret holding cloud-provider credentials.
+#
+# IMPORTANT: the agent rewrites $HOME to a per-job tempdir before each
+# terraform invocation (cleanup-boundary scoping), so SDK defaults like
+# ~/.aws/credentials or ~/.config/gcloud/application_default_credentials.json
+# will NOT be visible to terraform. Mount at a fixed absolute path and
+# point the matching SDK env var at it via `extraEnvVars`:
+#   - AWS_SHARED_CREDENTIALS_FILE   for AWS
+#   - GOOGLE_APPLICATION_CREDENTIALS for GCP
+#   - KUBECONFIG                     for kubectl/helm providers
 extraVolumes: []
   # - name: aws-credentials
   #   secret:
   #     secretName: aws-credentials
 
 # -- Extra volume mounts for the agent container.
+# Pair each mount with an `extraEnvVars` entry pointing the relevant SDK at
+# the absolute mount path (see note on `extraVolumes` above).
 extraVolumeMounts: []
   # - name: aws-credentials
-  #   mountPath: /home/nonroot/.aws
+  #   mountPath: /etc/aws
   #   readOnly: true
+  # # then in extraEnvVars:
+  # # - name: AWS_SHARED_CREDENTIALS_FILE
+  # #   value: /etc/aws/credentials
 
 # -- Extra init containers for the agent pod
 initContainers: []

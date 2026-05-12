@@ -105,6 +105,38 @@ Dex service account name
 {{- end }}
 
 {{/* =======================================================================
+   Postgres helpers (in-chart, dev/demo only)
+   ======================================================================= */}}
+
+{{/*
+Postgres fully qualified name
+*/}}
+{{- define "admiral.postgres.fullname" -}}
+{{- printf "%s-postgres" (include "admiral.fullname" .) | trunc 63 | trimSuffix "-" }}
+{{- end }}
+
+{{/*
+Postgres selector labels
+*/}}
+{{- define "admiral.postgres.selectorLabels" -}}
+app.kubernetes.io/name: {{ include "admiral.name" . }}-postgres
+app.kubernetes.io/instance: {{ .Release.Name }}
+app.kubernetes.io/component: postgres
+{{- end }}
+
+{{/*
+Postgres common labels
+*/}}
+{{- define "admiral.postgres.labels" -}}
+helm.sh/chart: {{ include "admiral.chart" . }}
+{{ include "admiral.postgres.selectorLabels" . }}
+{{- if .Chart.AppVersion }}
+app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
+{{- end }}
+app.kubernetes.io/managed-by: {{ .Release.Service }}
+{{- end }}
+
+{{/* =======================================================================
    Database helpers
    ======================================================================= */}}
 
@@ -112,8 +144,8 @@ Dex service account name
 Return the database host
 */}}
 {{- define "admiral.database.host" -}}
-{{- if .Values.postgresql.enabled }}
-{{- printf "%s-postgresql" .Release.Name }}
+{{- if .Values.postgres.enabled }}
+{{- include "admiral.postgres.fullname" . }}
 {{- else }}
 {{- .Values.externalDatabase.host }}
 {{- end }}
@@ -123,8 +155,8 @@ Return the database host
 Return the database port
 */}}
 {{- define "admiral.database.port" -}}
-{{- if .Values.postgresql.enabled }}
-{{- printf "5432" }}
+{{- if .Values.postgres.enabled }}
+{{- .Values.postgres.service.port | toString }}
 {{- else }}
 {{- .Values.externalDatabase.port | toString }}
 {{- end }}
@@ -134,8 +166,8 @@ Return the database port
 Return the database name
 */}}
 {{- define "admiral.database.name" -}}
-{{- if .Values.postgresql.enabled }}
-{{- .Values.postgresql.auth.database }}
+{{- if .Values.postgres.enabled }}
+{{- .Values.postgres.auth.database }}
 {{- else }}
 {{- .Values.externalDatabase.database }}
 {{- end }}
@@ -145,8 +177,8 @@ Return the database name
 Return the database user
 */}}
 {{- define "admiral.database.user" -}}
-{{- if .Values.postgresql.enabled }}
-{{- .Values.postgresql.auth.username }}
+{{- if .Values.postgres.enabled }}
+{{- .Values.postgres.auth.username }}
 {{- else }}
 {{- .Values.externalDatabase.username }}
 {{- end }}
@@ -156,7 +188,7 @@ Return the database user
 Return the database SSL mode
 */}}
 {{- define "admiral.database.sslMode" -}}
-{{- if .Values.postgresql.enabled }}
+{{- if .Values.postgres.enabled }}
 {{- printf "disable" }}
 {{- else }}
 {{- .Values.externalDatabase.sslMode | default "disable" }}
@@ -167,11 +199,11 @@ Return the database SSL mode
 Return the name of the secret containing the database password
 */}}
 {{- define "admiral.database.secretName" -}}
-{{- if .Values.postgresql.enabled }}
-  {{- if .Values.postgresql.auth.existingSecret }}
-    {{- .Values.postgresql.auth.existingSecret }}
+{{- if .Values.postgres.enabled }}
+  {{- if .Values.postgres.auth.existingSecret }}
+    {{- .Values.postgres.auth.existingSecret }}
   {{- else }}
-    {{- printf "%s-postgresql" .Release.Name }}
+    {{- include "admiral.postgres.fullname" . }}
   {{- end }}
 {{- else }}
   {{- if .Values.externalDatabase.existingSecret }}
@@ -186,14 +218,72 @@ Return the name of the secret containing the database password
 Return the key within the database secret containing the password
 */}}
 {{- define "admiral.database.secretKey" -}}
-{{- if .Values.postgresql.enabled }}
-{{- printf "password" }}
+{{- if .Values.postgres.enabled }}
+  {{- if .Values.postgres.auth.existingSecret }}
+    {{- .Values.postgres.auth.existingSecretKey | default "password" }}
+  {{- else }}
+    {{- printf "password" }}
+  {{- end }}
 {{- else }}
   {{- if .Values.externalDatabase.existingSecret }}
     {{- .Values.externalDatabase.existingSecretPasswordKey | default "db-password" }}
   {{- else }}
     {{- printf "db-password" }}
   {{- end }}
+{{- end }}
+{{- end }}
+
+{{/* =======================================================================
+   Redis helpers (in-chart, dev/demo only)
+   ======================================================================= */}}
+
+{{/*
+Redis fully qualified name
+*/}}
+{{- define "admiral.redis.fullname" -}}
+{{- printf "%s-redis" (include "admiral.fullname" .) | trunc 63 | trimSuffix "-" }}
+{{- end }}
+
+{{/*
+Redis selector labels
+*/}}
+{{- define "admiral.redis.selectorLabels" -}}
+app.kubernetes.io/name: {{ include "admiral.name" . }}-redis
+app.kubernetes.io/instance: {{ .Release.Name }}
+app.kubernetes.io/component: redis
+{{- end }}
+
+{{/*
+Redis common labels
+*/}}
+{{- define "admiral.redis.labels" -}}
+helm.sh/chart: {{ include "admiral.chart" . }}
+{{ include "admiral.redis.selectorLabels" . }}
+{{- if .Chart.AppVersion }}
+app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
+{{- end }}
+app.kubernetes.io/managed-by: {{ .Release.Service }}
+{{- end }}
+
+{{/*
+Return the name of the secret containing the Redis password
+*/}}
+{{- define "admiral.redis.secretName" -}}
+{{- if .Values.redis.auth.existingSecret }}
+{{- .Values.redis.auth.existingSecret }}
+{{- else }}
+{{- include "admiral.redis.fullname" . }}
+{{- end }}
+{{- end }}
+
+{{/*
+Return the key within the Redis secret holding the password
+*/}}
+{{- define "admiral.redis.secretKey" -}}
+{{- if .Values.redis.auth.existingSecret }}
+{{- .Values.redis.auth.existingSecretKey | default "redis-password" }}
+{{- else }}
+{{- printf "redis-password" }}
 {{- end }}
 {{- end }}
 
