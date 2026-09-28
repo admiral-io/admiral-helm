@@ -1,7 +1,14 @@
 apiVersion: v2
 name: admiral-k8s-agent
 description: Connects a Kubernetes cluster to Admiral.
-icon: https://charts.admiral.io/logo.png
+home: https://admiral.io
+sources:
+  - https://github.com/admiral-io/admiral-k8s-agent
+  - https://github.com/admiral-io/admiral-helm
+keywords:
+  - admiral
+  - kubernetes
+  - agent
 type: application
 version: 0.5.0
 appVersion: v0.1.0
