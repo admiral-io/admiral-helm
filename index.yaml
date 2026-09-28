@@ -1,0 +1,25 @@
+apiVersion: v1
+entries:
+  admiral-k8s-agent:
+  - apiVersion: v2
+    appVersion: v0.1.0
+    created: "2026-09-28T13:43:23.768704347Z"
+    description: Connects a Kubernetes cluster to Admiral.
+    digest: 87359a0a92918bcdaffd36455cd4500db507e39232869f689ac3a11057b21fd6
+    home: https://admiral.io
+    keywords:
+    - admiral
+    - kubernetes
+    - agent
+    maintainers:
+    - name: Admiral Contributors
+      url: https://github.com/admiral-io/admiral-helm
+    name: admiral-k8s-agent
+    sources:
+    - https://github.com/admiral-io/admiral-k8s-agent
+    - https://github.com/admiral-io/admiral-helm
+    type: application
+    urls:
+    - https://github.com/admiral-io/admiral-helm/releases/download/admiral-k8s-agent-0.5.0/admiral-k8s-agent-0.5.0.tgz
+    version: 0.5.0
+generated: "2026-09-28T13:43:23.768711668Z"
