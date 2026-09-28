@@ -1,0 +1,86 @@
+{{- if .Values.rbac.create }}
+{{- $name := include "admiral-k8s-agent.clusterScopedName" . }}
+{{- $sa := include "admiral-k8s-agent.serviceAccountName" . }}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ $name }}
+  labels:
+    {{- include "admiral-k8s-agent.labels" . | nindent 4 }}
+rules:
+{{- if .Values.rbac.namespaces }}
+  # Read the kube-system namespace's UID at startup.
+  - apiGroups: [""]
+    resources: ["namespaces"]
+    resourceNames: ["kube-system"]
+    verbs: ["get"]
+  # Find the namespaces a Role grants, to report where the agent may write.
+  - apiGroups: [""]
+    resources: ["namespaces"]
+    verbs: ["list"]
+{{- else }}
+  {{- include "admiral-k8s-agent.rbacRules" . | nindent 2 }}
+{{- end }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: {{ $name }}
+  labels:
+    {{- include "admiral-k8s-agent.labels" . | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: {{ $name }}
+subjects:
+  - kind: ServiceAccount
+    name: {{ $sa }}
+    namespace: {{ .Release.Namespace }}
+---
+# Lets the agent read the keys the cluster signs service-account tokens with
+# (/openid/v1/jwks). Enrollment sends them, and status reports include them.
+# Kubernetes grants this to every service account by default; the binding
+# keeps it working where that default was removed.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: {{ $name }}-issuer-discovery
+  labels:
+    {{- include "admiral-k8s-agent.labels" . | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: system:service-account-issuer-discovery
+subjects:
+  - kind: ServiceAccount
+    name: {{ $sa }}
+    namespace: {{ .Release.Namespace }}
+{{- range .Values.rbac.namespaces }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: {{ $name }}
+  namespace: {{ . }}
+  labels:
+    {{- include "admiral-k8s-agent.labels" $ | nindent 4 }}
+rules:
+  {{- include "admiral-k8s-agent.rbacRules" $ | nindent 2 }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ $name }}
+  namespace: {{ . }}
+  labels:
+    {{- include "admiral-k8s-agent.labels" $ | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: {{ $name }}
+subjects:
+  - kind: ServiceAccount
+    name: {{ $sa }}
+    namespace: {{ $.Release.Namespace }}
+{{- end }}
+{{- end }}

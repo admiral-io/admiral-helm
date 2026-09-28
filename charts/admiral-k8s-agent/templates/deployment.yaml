@@ -1,0 +1,135 @@
+{{- include "admiral-k8s-agent.validateValues" . }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "admiral-k8s-agent.fullname" . }}
+  labels:
+    {{- include "admiral-k8s-agent.labels" . | nindent 4 }}
+spec:
+  # One agent per release. Recreate stops the old pod before the new one
+  # starts, so two copies never run side by side during an upgrade.
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      {{- include "admiral-k8s-agent.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "admiral-k8s-agent.labels" . | nindent 8 }}
+        {{- with .Values.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "admiral-k8s-agent.serviceAccountName" . }}
+      # The agent reaches the Kubernetes API with the in-cluster service-account token.
+      automountServiceAccountToken: true
+      {{- with .Values.priorityClassName }}
+      priorityClassName: {{ . }}
+      {{- end }}
+      terminationGracePeriodSeconds: {{ add (include "admiral-k8s-agent.shutdownDrainSeconds" . | atoi) 5 }}
+      {{- with .Values.podSecurityContext }}
+      securityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: agent
+          {{- with .Values.securityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          args:
+            - run
+            {{- if .Values.verbose }}
+            - --verbose
+            {{- end }}
+            {{- with .Values.extraArgs }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          env:
+            - name: ADMIRAL_SERVER
+              value: {{ .Values.admiral.server | quote }}
+            - name: ADMIRAL_CLUSTER_ID
+              value: {{ .Values.admiral.clusterId | quote }}
+            - name: ADMIRAL_INSECURE
+              value: {{ .Values.admiral.insecure | quote }}
+            - name: ADMIRAL_TOKEN_FILE
+              value: /var/run/secrets/admiral/token
+            - name: ADMIRAL_NAMESPACE
+              value: {{ .Release.Namespace | quote }}
+            - name: ADMIRAL_PLAN_CONCURRENCY
+              value: {{ .Values.planConcurrency | quote }}
+            - name: ADMIRAL_SHUTDOWN_DRAIN
+              value: {{ .Values.shutdownDrain | quote }}
+            - name: ADMIRAL_HEALTH_ADDR
+              value: ":8081"
+            {{- if .Values.enrollment.existingSecret }}
+            # Optional so the pod still starts after the spent key's Secret is deleted.
+            - name: ADMIRAL_ENROLLMENT_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.enrollment.existingSecret }}
+                  key: {{ .Values.enrollment.existingSecretKey }}
+                  optional: true
+            {{- end }}
+            {{- with .Values.extraEnv }}
+            {{- include "admiral-k8s-agent.tplvalues.render" (dict "value" . "context" $) | nindent 12 }}
+            {{- end }}
+          ports:
+            - name: health
+              containerPort: 8081
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: health
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          # Fails after three status reports in a row do not reach Admiral.
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: health
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          {{- with .Values.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          volumeMounts:
+            - name: admiral-token
+              mountPath: /var/run/secrets/admiral
+              readOnly: true
+      volumes:
+        # The agent's identity to Admiral: a short-lived token the kubelet
+        # issues for Admiral's audience and rotates.
+        - name: admiral-token
+          projected:
+            sources:
+              - serviceAccountToken:
+                  path: token
+                  audience: {{ .Values.admiral.audience | quote }}
+                  expirationSeconds: 3600
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

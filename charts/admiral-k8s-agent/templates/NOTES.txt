@@ -1,0 +1,50 @@
+{{- $fullName := include "admiral-k8s-agent.fullname" . -}}
+
+==========================================================================
+  Admiral Kubernetes Agent
+==========================================================================
+
+  Agent:       {{ $fullName }}
+  Namespace:   {{ .Release.Namespace }}
+  Admiral:     {{ .Values.admiral.server }}
+  Cluster ID:  {{ .Values.admiral.clusterId }}
+  {{- if .Values.admiral.insecure }}
+  TLS:         DISABLED (admiral.insecure)
+  {{- end }}
+  {{- if .Values.rbac.namespaces }}
+  May plan in: {{ join ", " .Values.rbac.namespaces }}
+  {{- else }}
+  May plan in: every namespace
+  {{- end }}
+
+  Wait for the agent to start:
+    kubectl rollout status --namespace {{ .Release.Namespace }} deploy/{{ $fullName }}
+
+  Read its logs:
+    kubectl logs --namespace {{ .Release.Namespace }} deploy/{{ $fullName }} -f
+
+  The agent logs "Starting admiral-k8s-agent" at startup. Each status report
+  that does not reach Admiral logs "Status report failed" with the reason.
+  After three failures in a row the pod turns NotReady, which shows in:
+    kubectl get pods --namespace {{ .Release.Namespace }} -l app.kubernetes.io/instance={{ .Release.Name }}
+{{- if .Values.enrollment.existingSecret }}
+
+--------------------------------------------------------------------------
+  Enrollment
+--------------------------------------------------------------------------
+
+  The agent enrolls with the key in Secret "{{ .Values.enrollment.existingSecret }}".
+  The logs show "Enrollment did not complete" if Admiral refused it. The key
+  is single-use; once the cluster is enrolled you can delete the Secret.
+{{- end }}
+{{- if not .Values.rbac.create }}
+
+--------------------------------------------------------------------------
+  RBAC
+--------------------------------------------------------------------------
+
+  rbac.create=false: the chart granted the service account
+  "{{ include "admiral-k8s-agent.serviceAccountName" . }}" nothing. The agent needs at least
+  get on the kube-system namespace to start, and get, patch and create on
+  every kind it plans.
+{{- end }}

@@ -1,0 +1,183 @@
+# Default values for admiral-k8s-agent.
+# This is a YAML-formatted file.
+#
+# The chart runs one agent as a single replica. To run several agents in one
+# cluster, install the chart once per agent, each in its own namespace.
+
+# -- Container image configuration
+image:
+  # -- Image repository
+  repository: ghcr.io/admiral-io/admiral-k8s-agent
+  # -- Overrides the image tag whose default is the chart appVersion
+  tag: ""
+  # -- Image pull policy
+  pullPolicy: IfNotPresent
+
+# -- Image pull secrets for private registries
+imagePullSecrets: []
+# -- Override the chart name
+nameOverride: ""
+# -- Override the full release name
+fullnameOverride: ""
+
+# =============================================================================
+# Admiral
+# =============================================================================
+
+# -- How the agent reaches Admiral and which cluster it reports as.
+admiral:
+  # -- Admiral's address (`host:port`). Sets `ADMIRAL_SERVER`. Required.
+  server: ""
+  # -- The cluster's ID in Admiral, shown when you register the cluster. Sets
+  # `ADMIRAL_CLUSTER_ID`. Required.
+  clusterId: ""
+  # -- Audience of the projected service-account token the agent presents to
+  # Admiral. It must match the audience your Admiral installation expects.
+  audience: admiral.io
+  # -- Connect to Admiral without TLS. For local development only. Sets
+  # `ADMIRAL_INSECURE`.
+  insecure: false
+
+# -- Enrollment sends the cluster's service-account signing keys to Admiral
+# once, for a cluster whose keys Admiral cannot fetch (a private cluster, or
+# kind). Create a single-use enrollment key in Admiral, store it in a Secret in
+# the release namespace, and name that Secret here. The key is spent on first
+# use. You can delete the Secret afterwards, and the agent still starts.
+enrollment:
+  # -- Name of a Secret holding the enrollment key. Empty means the agent does
+  # not enroll.
+  existingSecret: ""
+  # -- Key within `existingSecret` that holds the enrollment key. Sets
+  # `ADMIRAL_ENROLLMENT_KEY`.
+  existingSecretKey: key
+
+# =============================================================================
+# RBAC
+# =============================================================================
+
+# -- What the agent may do in the cluster. A plan reads live objects and runs a
+# server-side apply dry run. Kubernetes authorizes that dry run as a real
+# write, a patch for an object that exists and a create for one that does not,
+# so the agent needs `get`, `patch` and `create` on every kind it plans.
+rbac:
+  # -- Create the RBAC objects. Set false to bind the service account yourself.
+  create: true
+  # -- Namespaces the agent may plan in. Empty grants the rules in every
+  # namespace through one ClusterRole. When set, the chart creates a Role and
+  # RoleBinding in each listed namespace, plus a small ClusterRole that lets
+  # the agent get the `kube-system` namespace (it reports that namespace's UID
+  # at startup) and list namespaces (to find where it may write). The listed
+  # namespaces must already exist.
+  namespaces: []
+  # -- Rules for the ClusterRole, or for each Role when `namespaces` is set.
+  # Empty uses `get`, `list`, `patch` and `create` on every resource. Replaces
+  # the default entirely; values are not merged.
+  rules: []
+    # - apiGroups: [""]
+    #   resources: ["configmaps", "secrets", "services"]
+    #   verbs: ["get", "patch", "create"]
+    # - apiGroups: ["apps"]
+    #   resources: ["deployments"]
+    #   verbs: ["get", "patch", "create"]
+
+# -- Service account the agent runs as. Its projected token is the agent's
+# identity to Admiral.
+serviceAccount:
+  # -- Create a service account
+  create: true
+  # -- The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template.
+  name: ""
+  # -- Annotations to add to the service account
+  annotations: {}
+
+# =============================================================================
+# Agent
+# =============================================================================
+
+# -- How many plans the agent runs at once, from 1 to 64. Sets
+# `ADMIRAL_PLAN_CONCURRENCY`.
+planConcurrency: 2
+
+# -- How long running work may finish after the pod is asked to stop. Sets
+# `ADMIRAL_SHUTDOWN_DRAIN`. Write it in hours, minutes and seconds (`25s`,
+# `1m30s`). The pod's termination grace period is set 5 seconds above it.
+shutdownDrain: 25s
+
+# -- Log at debug level. Adds `--verbose`.
+verbose: false
+
+# -- Extra arguments appended to the agent's `run` command
+extraArgs: []
+
+# -- Extra environment variables for the agent container. The agent honors
+# `HTTPS_PROXY`.
+extraEnv: []
+  # - name: HTTPS_PROXY
+  #   value: http://proxy.example.com:3128
+
+# =============================================================================
+# Pod
+# =============================================================================
+
+# -- Annotations to add to the pod
+podAnnotations: {}
+
+# -- Labels to add to the pod
+podLabels: {}
+
+# -- Pod security context. Meets the Kubernetes restricted Pod Security
+# Standard. The image runs as uid and gid 65532.
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 65532
+  runAsGroup: 65532
+  fsGroup: 65532
+  seccompProfile:
+    type: RuntimeDefault
+
+# -- Container security context
+securityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  runAsNonRoot: true
+  capabilities:
+    drop:
+      - ALL
+
+# -- Resource requests and limits
+resources: {}
+  # requests:
+  #   cpu: 50m
+  #   memory: 64Mi
+  # limits:
+  #   cpu: 500m
+  #   memory: 256Mi
+
+# -- Node selector for pod assignment
+nodeSelector: {}
+
+# -- Tolerations for pod assignment
+tolerations: []
+
+# -- Affinity rules for pod assignment
+affinity: {}
+
+# -- Priority class for the pod
+priorityClassName: ""
+
+# =============================================================================
+# Network Policy
+# =============================================================================
+
+# -- NetworkPolicy that limits the agent's outbound traffic to DNS (port 53),
+# the Kubernetes API server (ports 443 and 6443, since many clusters serve the
+# API on 6443 behind the `kubernetes` Service), and Admiral (the port in
+# `admiral.server`, 443 when none is given). The rules match by port only,
+# because the chart cannot know the addresses behind them. Inbound traffic is
+# left alone: the agent accepts none except its health checks.
+networkPolicy:
+  # -- Create the NetworkPolicy
+  enabled: false
+  # -- Additional egress rules, for example to reach an HTTPS proxy
+  extraEgress: []
