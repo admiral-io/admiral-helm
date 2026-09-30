@@ -1,0 +1,4 @@
+# Artifact Hub repository metadata. Served at https://charts.admiral.io/artifacthub-repo.yml,
+# next to index.yaml, so Artifact Hub can mark this repository as a verified publisher.
+# https://artifacthub.io/docs/topics/repositories/helm-charts/
+repositoryID: 1a115bef-33f0-4daf-913c-d433ef288e9d
