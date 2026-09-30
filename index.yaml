@@ -1,6 +1,46 @@
 apiVersion: v1
 entries:
   admiral-k8s-agent:
+  - annotations:
+      artifacthub.io/category: integration-delivery
+      artifacthub.io/changes: |
+        - kind: added
+          description: Artifact Hub metadata, a logo, and links to documentation and support
+        - kind: removed
+          description: Links to a source repository that is not public
+      artifacthub.io/displayName: Admiral Kubernetes Agent
+      artifacthub.io/license: Apache-2.0
+      artifacthub.io/links: |
+        - name: Documentation
+          url: https://admiral.io/docs?utm_source=artifacthub&utm_medium=referral&utm_campaign=admiral-k8s-agent
+        - name: Support
+          url: https://github.com/admiral-io/admiral-community
+    apiVersion: v2
+    appVersion: v0.1.0
+    created: "2026-09-30T23:43:33.434582546Z"
+    description: Connects a Kubernetes cluster to Admiral over an outbound-only connection
+      and plans changes with server-side dry runs.
+    digest: f2de8190523a58787d3f5c5265cc3cc0d1c069b99103f8262b8be6aef1cfd036
+    home: https://admiral.io
+    icon: https://raw.githubusercontent.com/admiral-io/admiral-helm/master/assets/admiral-icon.svg
+    keywords:
+    - admiral
+    - kubernetes
+    - agent
+    - deployment
+    - platform-engineering
+    - continuous-delivery
+    maintainers:
+    - email: support@admiral.io
+      name: Admiral Contributors
+      url: https://github.com/admiral-io/admiral-helm
+    name: admiral-k8s-agent
+    sources:
+    - https://github.com/admiral-io/admiral-helm
+    type: application
+    urls:
+    - https://github.com/admiral-io/admiral-helm/releases/download/admiral-k8s-agent-0.5.1/admiral-k8s-agent-0.5.1.tgz
+    version: 0.5.1
   - apiVersion: v2
     appVersion: v0.1.0
     created: "2026-09-28T13:43:23.768704347Z"
@@ -22,4 +62,4 @@ entries:
     urls:
     - https://github.com/admiral-io/admiral-helm/releases/download/admiral-k8s-agent-0.5.0/admiral-k8s-agent-0.5.0.tgz
     version: 0.5.0
-generated: "2026-09-28T13:43:23.768711668Z"
+generated: "2026-09-30T23:43:33.434593156Z"
