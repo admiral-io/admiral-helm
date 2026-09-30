@@ -4,9 +4,11 @@
 
 {{ template "chart.description" . }}
 
+[Admiral](https://admiral.io/?utm_source=artifacthub&utm_medium=referral&utm_campaign=admiral-k8s-agent) is a control plane for coordinating infrastructure and application delivery across environments. This chart installs the self-hosted agent that connects one of your clusters to it.
+
 ## What it installs
 
-The [Admiral Kubernetes Agent](https://github.com/admiral-io/admiral-k8s-agent) runs in your cluster, takes work from Admiral, and reports what it finds. It plans changes by server-side apply dry run and reports the cluster's version, API groups and what it may write. It opens outbound connections only.
+The Admiral Kubernetes Agent runs in your cluster, takes work from Admiral, and reports what it finds. It plans changes by server-side apply dry run and reports the cluster's version, API groups and what it may write. It opens outbound connections only.
 
 The chart installs one agent:
 
@@ -38,7 +40,7 @@ helm install admiral-k8s-agent admiral/admiral-k8s-agent \
 
 ## Several agents in one cluster
 
-To keep workloads apart, run one release per agent, each in its own namespace and limited with `rbac.namespaces` to the namespaces it may plan in. The chart then creates a Role in each of those namespaces instead of granting every namespace. In Admiral, grant each agent only to the environments that should use it. See [layouts](https://github.com/admiral-io/admiral-k8s-agent/blob/master/docs/layouts.md) for the full walkthrough.
+To keep workloads apart, run one release per agent, each in its own namespace and limited with `rbac.namespaces` to the namespaces it may plan in. The chart then creates a Role in each of those namespaces instead of granting every namespace. In Admiral, grant each agent only to the environments that should use it.
 
 ```bash
 helm install agent-payments admiral/admiral-k8s-agent \
@@ -64,7 +66,7 @@ Then add `--set enrollment.existingSecret=admiral-k8s-agent-enrollment`. The key
 
 ## Permissions
 
-A dry-run apply is authorized as a real write, so the default rules grant `get`, `list`, `patch` and `create` on every resource. Narrow them with `rbac.namespaces` and `rbac.rules`. Whatever you grant, the agent needs `get` on the `kube-system` namespace to start. See [permissions](https://github.com/admiral-io/admiral-k8s-agent/blob/master/docs/permissions.md) for each call the agent makes and why.
+A dry-run apply is authorized as a real write, so the default rules grant `get`, `list`, `patch` and `create` on every resource. Narrow them with `rbac.namespaces` and `rbac.rules`. Whatever you grant, the agent needs `get` on the `kube-system` namespace to start.
 
 {{ template "chart.requirementsSection" . }}
 

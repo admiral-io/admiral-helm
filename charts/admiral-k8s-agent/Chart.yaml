@@ -1,17 +1,35 @@
 apiVersion: v2
 name: admiral-k8s-agent
-description: Connects a Kubernetes cluster to Admiral.
+description: Connects a Kubernetes cluster to Admiral over an outbound-only connection and plans changes with server-side dry runs.
 home: https://admiral.io
+icon: https://raw.githubusercontent.com/admiral-io/admiral-helm/master/assets/admiral-icon.svg
 sources:
-  - https://github.com/admiral-io/admiral-k8s-agent
   - https://github.com/admiral-io/admiral-helm
 keywords:
   - admiral
   - kubernetes
   - agent
+  - deployment
+  - platform-engineering
+  - continuous-delivery
 type: application
-version: 0.5.0
+version: 0.5.1
 appVersion: v0.1.0
 maintainers:
   - name: Admiral Contributors
+    email: support@admiral.io
     url: https://github.com/admiral-io/admiral-helm
+annotations:
+  artifacthub.io/displayName: Admiral Kubernetes Agent
+  artifacthub.io/license: Apache-2.0
+  artifacthub.io/category: integration-delivery
+  artifacthub.io/links: |
+    - name: Documentation
+      url: https://admiral.io/docs?utm_source=artifacthub&utm_medium=referral&utm_campaign=admiral-k8s-agent
+    - name: Support
+      url: https://github.com/admiral-io/admiral-community
+  artifacthub.io/changes: |
+    - kind: added
+      description: Artifact Hub metadata, a logo, and links to documentation and support
+    - kind: removed
+      description: Links to a source repository that is not public
