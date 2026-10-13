@@ -81,7 +81,7 @@ RBAC rules for the ClusterRole, or for each Role when rbac.namespaces is set.
 {{- else -}}
 - apiGroups: ["*"]
   resources: ["*"]
-  verbs: ["get", "list", "patch", "create"]
+  verbs: ["get", "list", "patch", "create", "delete"]
 {{- end }}
 {{- end }}
 

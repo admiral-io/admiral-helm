@@ -29,4 +29,4 @@ schema:
 .PHONY: template # Render chart templates locally (for debugging).
 template:
 	helm template admiral-k8s-agent charts/admiral-k8s-agent \
-		--set admiral.server=admiral.example.com:443 --set admiral.clusterId=00000000-0000-0000-0000-000000000000
+		--set admiral.server=admiral.example.com:443 --set admiral.providerId=wip-000000000000

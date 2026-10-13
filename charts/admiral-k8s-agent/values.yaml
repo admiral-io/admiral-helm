@@ -24,13 +24,13 @@ fullnameOverride: ""
 # Admiral
 # =============================================================================
 
-# -- How the agent reaches Admiral and which cluster it reports as.
+# -- How the agent reaches Admiral and which provider vouches for it.
 admiral:
   # -- Admiral's address (`host:port`). Sets `ADMIRAL_SERVER`. Required.
   server: ""
-  # -- The cluster's ID in Admiral, shown when you register the cluster. Sets
-  # `ADMIRAL_CLUSTER_ID`. Required.
-  clusterId: ""
+  # -- The workload identity provider in Admiral whose keys verify the agent's
+  # token, a `wip-` id. Sets `ADMIRAL_PROVIDER_ID`. Required.
+  providerId: ""
   # -- Audience of the projected service-account token the agent presents to
   # Admiral. It must match the audience your Admiral installation expects.
   audience: admiral.io
@@ -56,13 +56,15 @@ enrollment:
 # =============================================================================
 
 # -- What the agent may do in the cluster. A plan reads live objects and runs a
-# server-side apply dry run. Kubernetes authorizes that dry run as a real
-# write, a patch for an object that exists and a create for one that does not,
-# so the agent needs `get`, `patch` and `create` on every kind it plans.
+# server-side apply dry run; an apply does the same for real. Kubernetes
+# authorizes either as a patch for an object that exists and a create for one
+# that does not. An apply also deletes: objects a component no longer renders,
+# finished hooks, and objects it replaces. So the agent needs `get`, `patch`,
+# `create` and `delete` on every kind it manages.
 rbac:
   # -- Create the RBAC objects. Set false to bind the service account yourself.
   create: true
-  # -- Namespaces the agent may plan in. Empty grants the rules in every
+  # -- Namespaces the agent may deploy to. Empty grants the rules in every
   # namespace through one ClusterRole. When set, the chart creates a Role and
   # RoleBinding in each listed namespace, plus a small ClusterRole that lets
   # the agent get the `kube-system` namespace (it reports that namespace's UID
@@ -70,15 +72,15 @@ rbac:
   # namespaces must already exist.
   namespaces: []
   # -- Rules for the ClusterRole, or for each Role when `namespaces` is set.
-  # Empty uses `get`, `list`, `patch` and `create` on every resource. Replaces
+  # Empty uses `get`, `list`, `patch`, `create` and `delete` on every resource. Replaces
   # the default entirely; values are not merged.
   rules: []
     # - apiGroups: [""]
     #   resources: ["configmaps", "secrets", "services"]
-    #   verbs: ["get", "patch", "create"]
+    #   verbs: ["get", "patch", "create", "delete"]
     # - apiGroups: ["apps"]
     #   resources: ["deployments"]
-    #   verbs: ["get", "patch", "create"]
+    #   verbs: ["get", "patch", "create", "delete"]
 
 # -- Service account the agent runs as. Its projected token is the agent's
 # identity to Admiral.
@@ -98,6 +100,15 @@ serviceAccount:
 # -- How many plans the agent runs at once, from 1 to 64. Sets
 # `ADMIRAL_PLAN_CONCURRENCY`.
 planConcurrency: 2
+
+# -- How many applies the agent runs at once, from 1 to 64. Sets
+# `ADMIRAL_APPLY_CONCURRENCY`.
+applyConcurrency: 1
+
+# -- How long one component's objects, and each of its hooks, may take to
+# become ready during an apply. Sets `ADMIRAL_APPLY_HEALTH_TIMEOUT`. Write it
+# in hours, minutes and seconds (`5m`, `1h`).
+applyHealthTimeout: 5m
 
 # -- How long running work may finish after the pod is asked to stop. Sets
 # `ADMIRAL_SHUTDOWN_DRAIN`. Write it in hours, minutes and seconds (`25s`,

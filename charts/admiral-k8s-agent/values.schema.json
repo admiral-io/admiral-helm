@@ -8,11 +8,11 @@
                 "audience": {
                     "type": "string"
                 },
-                "clusterId": {
-                    "type": "string"
-                },
                 "insecure": {
                     "type": "boolean"
+                },
+                "providerId": {
+                    "type": "string"
                 },
                 "server": {
                     "type": "string"
@@ -21,6 +21,12 @@
         },
         "affinity": {
             "type": "object"
+        },
+        "applyConcurrency": {
+            "type": "integer"
+        },
+        "applyHealthTimeout": {
+            "type": "string"
         },
         "enrollment": {
             "type": "object",
