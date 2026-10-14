@@ -17,7 +17,7 @@ The chart installs one agent:
 - RBAC for what the agent may deploy, and a binding to `system:service-account-issuer-discovery` so it can read the cluster's token signing keys
 - optionally, an egress-only NetworkPolicy
 
-In Admiral, create a workload identity provider for the cluster and note its `wip-` id, then create each agent with its subject, `system:serviceaccount:<namespace>:<service account>`. Several agents in one cluster share the provider.
+In Admiral, create a workload identity provider for the cluster, then create each agent with its subject, `system:serviceaccount:<namespace>:<service account>`, and note the agent's `agt-` id. Several agents in one cluster share the provider.
 
 ```bash
 helm repo add admiral https://charts.admiral.io
@@ -34,7 +34,7 @@ The default. The agent may deploy to every namespace through one ClusterRole.
 helm install admiral-k8s-agent admiral/admiral-k8s-agent \
   --namespace admiral-system --create-namespace \
   --set admiral.server=admiral.example.com:443 \
-  --set admiral.providerId=<wip- id> \
+  --set admiral.agentId=<agt- id> \
   --set serviceAccount.name=admiral-k8s-agent
 ```
 
@@ -46,7 +46,7 @@ To keep workloads apart, run one release per agent, each in its own namespace an
 helm install agent-payments admiral/admiral-k8s-agent \
   --namespace admiral-payments --create-namespace \
   --set admiral.server=admiral.example.com:443 \
-  --set admiral.providerId=<wip- id> \
+  --set admiral.agentId=<agt- id> \
   --set serviceAccount.name=admiral-k8s-agent \
   --set 'rbac.namespaces={payments-prod}'
 ```
@@ -72,10 +72,10 @@ A dry-run apply is authorized as a real write, and an apply deletes what a compo
 
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
-| admiral | object | `{"audience":"admiral.io","insecure":false,"providerId":"","server":""}` | How the agent reaches Admiral and which provider vouches for it. |
+| admiral | object | `{"agentId":"","audience":"admiral.io","insecure":false,"server":""}` | How the agent reaches Admiral and which agent it is. |
+| admiral.agentId | string | `""` | The agent in Admiral this release runs as, an `agt-` id. Admiral checks the service-account token against that agent's provider and subject. Sets `ADMIRAL_AGENT_ID`. Required. |
 | admiral.audience | string | `"admiral.io"` | Audience of the projected service-account token the agent presents to Admiral. It must match the audience your Admiral installation expects. |
 | admiral.insecure | bool | `false` | Connect to Admiral without TLS. For local development only. Sets `ADMIRAL_INSECURE`. |
-| admiral.providerId | string | `""` | The workload identity provider in Admiral whose keys verify the agent's token, a `wip-` id. Sets `ADMIRAL_PROVIDER_ID`. Required. |
 | admiral.server | string | `""` | Admiral's address (`host:port`). Sets `ADMIRAL_SERVER`. Required. |
 | affinity | object | `{}` | Affinity rules for pod assignment |
 | applyConcurrency | int | `1` | How many applies the agent runs at once, from 1 to 64. Sets `ADMIRAL_APPLY_CONCURRENCY`. |

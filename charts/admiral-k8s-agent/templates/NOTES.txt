@@ -7,7 +7,7 @@
   Agent:       {{ $fullName }}
   Namespace:   {{ .Release.Namespace }}
   Admiral:     {{ .Values.admiral.server }}
-  Provider:    {{ .Values.admiral.providerId }}
+  Agent ID:    {{ .Values.admiral.agentId }}
   {{- if .Values.admiral.insecure }}
   TLS:         DISABLED (admiral.insecure)
   {{- end }}

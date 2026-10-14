@@ -24,13 +24,14 @@ fullnameOverride: ""
 # Admiral
 # =============================================================================
 
-# -- How the agent reaches Admiral and which provider vouches for it.
+# -- How the agent reaches Admiral and which agent it is.
 admiral:
   # -- Admiral's address (`host:port`). Sets `ADMIRAL_SERVER`. Required.
   server: ""
-  # -- The workload identity provider in Admiral whose keys verify the agent's
-  # token, a `wip-` id. Sets `ADMIRAL_PROVIDER_ID`. Required.
-  providerId: ""
+  # -- The agent in Admiral this release runs as, an `agt-` id. Admiral checks
+  # the service-account token against that agent's provider and subject. Sets
+  # `ADMIRAL_AGENT_ID`. Required.
+  agentId: ""
   # -- Audience of the projected service-account token the agent presents to
   # Admiral. It must match the audience your Admiral installation expects.
   audience: admiral.io

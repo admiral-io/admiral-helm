@@ -5,14 +5,14 @@
         "admiral": {
             "type": "object",
             "properties": {
+                "agentId": {
+                    "type": "string"
+                },
                 "audience": {
                     "type": "string"
                 },
                 "insecure": {
                     "type": "boolean"
-                },
-                "providerId": {
-                    "type": "string"
                 },
                 "server": {
                     "type": "string"

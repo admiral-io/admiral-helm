@@ -17,7 +17,7 @@ The chart installs one agent:
 - RBAC for what the agent may deploy, and a binding to `system:service-account-issuer-discovery` so it can read the cluster's token signing keys
 - optionally, an egress-only NetworkPolicy
 
-In Admiral, create a workload identity provider for the cluster and note its `wip-` id, then create each agent with its subject, `system:serviceaccount:<namespace>:<service account>`. Several agents in one cluster share the provider.
+In Admiral, create a workload identity provider for the cluster, then create each agent with its subject, `system:serviceaccount:<namespace>:<service account>`, and note the agent's `agt-` id. Several agents in one cluster share the provider.
 
 ```bash
 helm repo add admiral https://charts.admiral.io
@@ -34,7 +34,7 @@ The default. The agent may deploy to every namespace through one ClusterRole.
 helm install admiral-k8s-agent admiral/admiral-k8s-agent \
   --namespace admiral-system --create-namespace \
   --set admiral.server=admiral.example.com:443 \
-  --set admiral.providerId=<wip- id> \
+  --set admiral.agentId=<agt- id> \
   --set serviceAccount.name=admiral-k8s-agent
 ```
 
@@ -46,7 +46,7 @@ To keep workloads apart, run one release per agent, each in its own namespace an
 helm install agent-payments admiral/admiral-k8s-agent \
   --namespace admiral-payments --create-namespace \
   --set admiral.server=admiral.example.com:443 \
-  --set admiral.providerId=<wip- id> \
+  --set admiral.agentId=<agt- id> \
   --set serviceAccount.name=admiral-k8s-agent \
   --set 'rbac.namespaces={payments-prod}'
 ```

@@ -60,8 +60,8 @@ spec:
           env:
             - name: ADMIRAL_SERVER
               value: {{ .Values.admiral.server | quote }}
-            - name: ADMIRAL_PROVIDER_ID
-              value: {{ .Values.admiral.providerId | quote }}
+            - name: ADMIRAL_AGENT_ID
+              value: {{ .Values.admiral.agentId | quote }}
             - name: ADMIRAL_INSECURE
               value: {{ .Values.admiral.insecure | quote }}
             - name: ADMIRAL_TOKEN_FILE

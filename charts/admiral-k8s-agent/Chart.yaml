@@ -30,6 +30,6 @@ annotations:
       url: https://github.com/admiral-io/admiral-community
   artifacthub.io/changes: |
     - kind: changed
-      description: admiral.providerId (ADMIRAL_PROVIDER_ID) replaces admiral.clusterId
+      description: admiral.agentId (ADMIRAL_AGENT_ID) replaces admiral.clusterId
     - kind: added
       description: applyConcurrency and applyHealthTimeout, and delete in the default rules, for applying
