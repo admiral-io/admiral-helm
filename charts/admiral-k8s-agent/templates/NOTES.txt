@@ -7,14 +7,14 @@
   Agent:       {{ $fullName }}
   Namespace:   {{ .Release.Namespace }}
   Admiral:     {{ .Values.admiral.server }}
-  Cluster ID:  {{ .Values.admiral.clusterId }}
+  Agent ID:    {{ .Values.admiral.agentId }}
   {{- if .Values.admiral.insecure }}
   TLS:         DISABLED (admiral.insecure)
   {{- end }}
   {{- if .Values.rbac.namespaces }}
-  May plan in: {{ join ", " .Values.rbac.namespaces }}
+  Deploys to:  {{ join ", " .Values.rbac.namespaces }}
   {{- else }}
-  May plan in: every namespace
+  Deploys to:  every namespace
   {{- end }}
 
   Wait for the agent to start:

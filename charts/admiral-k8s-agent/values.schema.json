@@ -5,10 +5,10 @@
         "admiral": {
             "type": "object",
             "properties": {
-                "audience": {
+                "agentId": {
                     "type": "string"
                 },
-                "clusterId": {
+                "audience": {
                     "type": "string"
                 },
                 "insecure": {
@@ -21,6 +21,12 @@
         },
         "affinity": {
             "type": "object"
+        },
+        "applyConcurrency": {
+            "type": "integer"
+        },
+        "applyHealthTimeout": {
+            "type": "string"
         },
         "enrollment": {
             "type": "object",
