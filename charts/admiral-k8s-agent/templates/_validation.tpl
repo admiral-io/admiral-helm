@@ -14,6 +14,17 @@ Produces clear error messages when required settings are missing.
   {{- fail "\n\nADMIRAL K8S-AGENT CONFIGURATION ERROR:\n  admiral.agentId is required, as an agt- id.\n  Create the agent in Admiral and set its ID:\n    --set admiral.agentId=<agt- id>\n" }}
 {{- end }}
 
+{{/* --- TLS --- */}}
+{{- if and .Values.admiral.insecure (include "admiral-k8s-agent.caConfigMap" .) }}
+  {{- fail "\n\nADMIRAL K8S-AGENT CONFIGURATION ERROR:\n  admiral.insecure and admiral.ca.configMap rule each other out.\n" }}
+{{- end }}
+
+{{/* --- Log format --- */}}
+{{- $logFormat := include "admiral-k8s-agent.logFormat" . }}
+{{- if not (has $logFormat (list "json" "text")) }}
+  {{- fail (printf "\n\nADMIRAL K8S-AGENT CONFIGURATION ERROR:\n  logFormat must be json or text (got %q).\n" $logFormat) }}
+{{- end }}
+
 {{/* --- Plan concurrency --- */}}
 {{- $pc := int .Values.planConcurrency }}
 {{- if or (lt $pc 1) (gt $pc 64) }}

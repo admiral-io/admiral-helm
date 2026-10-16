@@ -35,9 +35,17 @@ admiral:
   # -- Audience of the projected service-account token the agent presents to
   # Admiral. It must match the audience your Admiral installation expects.
   audience: admiral.io
-  # -- Connect to Admiral without TLS. For local development only. Sets
-  # `ADMIRAL_INSECURE`.
+  # -- Connect to Admiral without TLS. For local development only: the agent
+  # warns at start and will not enroll this way. Sets `ADMIRAL_INSECURE`.
   insecure: false
+  # -- Trust a private certificate authority for Admiral, beside the
+  # system's. Names a ConfigMap in the release namespace holding PEM
+  # certificates. Sets `ADMIRAL_CA_FILE`.
+  ca:
+    # -- Name of the ConfigMap. Empty trusts the system's authorities only.
+    configMap: ""
+    # -- Key within the ConfigMap that holds the certificates.
+    key: ca.crt
 
 # -- Enrollment sends the cluster's service-account signing keys to Admiral
 # once, for a cluster whose keys Admiral cannot fetch (a private cluster, or
@@ -48,8 +56,9 @@ enrollment:
   # -- Name of a Secret holding the enrollment key. Empty means the agent does
   # not enroll.
   existingSecret: ""
-  # -- Key within `existingSecret` that holds the enrollment key. Sets
-  # `ADMIRAL_ENROLLMENT_KEY`.
+  # -- Key within `existingSecret` that holds the enrollment key. The key is
+  # mounted as a file, so it does not show in the pod's environment. Sets
+  # `ADMIRAL_ENROLLMENT_KEY_FILE`.
   existingSecretKey: key
 
 # =============================================================================
@@ -66,15 +75,18 @@ rbac:
   # -- Create the RBAC objects. Set false to bind the service account yourself.
   create: true
   # -- Namespaces the agent may deploy to. Empty grants the rules in every
-  # namespace through one ClusterRole. When set, the chart creates a Role and
+  # namespace through one aggregated ClusterRole. To manage a custom resource
+  # then, add a ClusterRole for its group labeled
+  # `admiral.io/aggregate-to-agent: "true"`. When set, the chart creates a Role and
   # RoleBinding in each listed namespace, plus a small ClusterRole that lets
   # the agent get the `kube-system` namespace (it reports that namespace's UID
   # at startup) and list namespaces (to find where it may write). The listed
   # namespaces must already exist.
   namespaces: []
   # -- Rules for the ClusterRole, or for each Role when `namespaces` is set.
-  # Empty uses `get`, `list`, `patch`, `create` and `delete` on every resource. Replaces
-  # the default entirely; values are not merged.
+  # Empty grants `get`, `patch`, `create` and `delete` on the built-in kinds
+  # most charts render, each named, with no wildcard. Replaces the default
+  # entirely; values are not merged.
   rules: []
     # - apiGroups: [""]
     #   resources: ["configmaps", "secrets", "services"]
@@ -115,6 +127,27 @@ applyHealthTimeout: 5m
 # `ADMIRAL_SHUTDOWN_DRAIN`. Write it in hours, minutes and seconds (`25s`,
 # `1m30s`). The pod's termination grace period is set 5 seconds above it.
 shutdownDrain: 25s
+
+# -- The only namespaces plans and applies may read or write. A plan or apply
+# that touches another namespace fails. Empty means any namespace the agent's
+# RBAC allows. Sets `ADMIRAL_ALLOWED_NAMESPACES`.
+allowedNamespaces: []
+
+# -- The most a job's artifact may expand to, from `1Mi` to `512Mi`. A larger
+# artifact fails its job. A plan holds about 16 times this, so raise the memory
+# limit with it. Sets `ADMIRAL_MAX_ARTIFACT_SIZE`.
+maxArtifactSize: 16Mi
+
+# -- Requests per second the agent sends the Kubernetes API, shared by all its
+# jobs. Sets `ADMIRAL_KUBE_QPS`.
+kubeQPS: 50
+
+# -- Requests the agent may send at once above `kubeQPS`. Sets
+# `ADMIRAL_KUBE_BURST`.
+kubeBurst: 100
+
+# -- Log format, `json` or `text`. Sets `ADMIRAL_LOG_FORMAT`.
+logFormat: json
 
 # -- Log at debug level. Adds `--verbose`.
 verbose: false
@@ -157,17 +190,21 @@ securityContext:
     drop:
       - ALL
 
-# -- Resource requests and limits
-resources: {}
-  # requests:
-  #   cpu: 50m
-  #   memory: 64Mi
-  # limits:
-  #   cpu: 500m
-  #   memory: 256Mi
+# -- Resource requests and limits. The 1Gi limit covers two plans and an apply
+# at the default `maxArtifactSize`. To accept larger artifacts or run more jobs
+# at once, raise it by 16 times the extra size for each job slot. The agent
+# sets Go's soft memory limit to 90% of the container's.
+resources:
+  requests:
+    cpu: 50m
+    memory: 64Mi
+  limits:
+    cpu: 500m
+    memory: 1Gi
 
-# -- Node selector for pod assignment
-nodeSelector: {}
+# -- Node selector for pod assignment. The image is built for Linux only.
+nodeSelector:
+  kubernetes.io/os: linux
 
 # -- Tolerations for pod assignment
 tolerations: []

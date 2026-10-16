@@ -6,11 +6,17 @@ metadata:
   labels:
     {{- include "admiral-k8s-agent.labels" . | nindent 4 }}
 spec:
-  # One agent per release. Recreate stops the old pod before the new one
-  # starts, so two copies never run side by side during an upgrade.
+  # One agent per release. An upgrade starts the new pod first and stops the
+  # old one once the new one is ready, which takes a status report reaching
+  # Admiral, so a new pod that cannot reach Admiral leaves the old one
+  # running. Until then both claim work as the same agent; each job attempt
+  # runs under a lease in one pod only.
   replicas: 1
   strategy:
-    type: Recreate
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
   selector:
     matchLabels:
       {{- include "admiral-k8s-agent.selectorLabels" . | nindent 6 }}
@@ -78,14 +84,25 @@ spec:
               value: {{ .Values.shutdownDrain | quote }}
             - name: ADMIRAL_HEALTH_ADDR
               value: ":8081"
+            - name: ADMIRAL_MAX_ARTIFACT_SIZE
+              value: {{ .Values.maxArtifactSize | default "16Mi" | quote }}
+            - name: ADMIRAL_KUBE_QPS
+              value: {{ .Values.kubeQPS | default 50 | quote }}
+            - name: ADMIRAL_KUBE_BURST
+              value: {{ .Values.kubeBurst | default 100 | quote }}
+            - name: ADMIRAL_LOG_FORMAT
+              value: {{ include "admiral-k8s-agent.logFormat" . | quote }}
+            {{- with .Values.allowedNamespaces }}
+            - name: ADMIRAL_ALLOWED_NAMESPACES
+              value: {{ join "," . | quote }}
+            {{- end }}
+            {{- if include "admiral-k8s-agent.caConfigMap" . }}
+            - name: ADMIRAL_CA_FILE
+              value: /etc/admiral/ca/{{ include "admiral-k8s-agent.caKey" . }}
+            {{- end }}
             {{- if .Values.enrollment.existingSecret }}
-            # Optional so the pod still starts after the spent key's Secret is deleted.
-            - name: ADMIRAL_ENROLLMENT_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.enrollment.existingSecret }}
-                  key: {{ .Values.enrollment.existingSecretKey }}
-                  optional: true
+            - name: ADMIRAL_ENROLLMENT_KEY_FILE
+              value: /var/run/secrets/admiral-enrollment/{{ .Values.enrollment.existingSecretKey }}
             {{- end }}
             {{- with .Values.extraEnv }}
             {{- include "admiral-k8s-agent.tplvalues.render" (dict "value" . "context" $) | nindent 12 }}
@@ -94,13 +111,16 @@ spec:
             - name: health
               containerPort: 8081
               protocol: TCP
+          # Fails only when a loop has not turned for 10 minutes, so an outage
+          # makes the agent not ready rather than restarting it.
           livenessProbe:
             httpGet:
               path: /healthz
               port: health
             initialDelaySeconds: 15
             periodSeconds: 20
-          # Fails after three status reports in a row do not reach Admiral.
+          # Fails until the first status report reaches Admiral, then after
+          # three reports in a row fail, or three reads of the Kubernetes API.
           readinessProbe:
             httpGet:
               path: /readyz
@@ -115,6 +135,16 @@ spec:
             - name: admiral-token
               mountPath: /var/run/secrets/admiral
               readOnly: true
+            {{- if .Values.enrollment.existingSecret }}
+            - name: admiral-enrollment
+              mountPath: /var/run/secrets/admiral-enrollment
+              readOnly: true
+            {{- end }}
+            {{- if include "admiral-k8s-agent.caConfigMap" . }}
+            - name: admiral-ca
+              mountPath: /etc/admiral/ca
+              readOnly: true
+            {{- end }}
       volumes:
         # The agent's identity to Admiral: a short-lived token the kubelet
         # issues for Admiral's audience and rotates.
@@ -125,6 +155,19 @@ spec:
                   path: token
                   audience: {{ .Values.admiral.audience | quote }}
                   expirationSeconds: 3600
+        {{- if .Values.enrollment.existingSecret }}
+        # Optional, so the pod still starts after the spent key's Secret is
+        # deleted.
+        - name: admiral-enrollment
+          secret:
+            secretName: {{ .Values.enrollment.existingSecret }}
+            optional: true
+        {{- end }}
+        {{- if include "admiral-k8s-agent.caConfigMap" . }}
+        - name: admiral-ca
+          configMap:
+            name: {{ include "admiral-k8s-agent.caConfigMap" . }}
+        {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}

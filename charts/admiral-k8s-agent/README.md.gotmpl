@@ -66,7 +66,38 @@ Then add `--set enrollment.existingSecret=admiral-k8s-agent-enrollment`. The key
 
 ## Permissions
 
-A dry-run apply is authorized as a real write, and an apply deletes what a component no longer renders, finished hooks and objects it replaces. So the default rules grant `get`, `list`, `patch`, `create` and `delete` on every resource. Narrow them with `rbac.namespaces` and `rbac.rules`. Whatever you grant, the agent needs `get` on the `kube-system` namespace to start.
+A dry-run apply is authorized as a real write, and an apply deletes what a component no longer renders, finished hooks and objects it replaces. So the default rules grant `get`, `patch`, `create` and `delete` on the built-in kinds most charts render. Each kind is named, because a wildcard also grants subresources such as `pods/exec` and `serviceaccounts/token`, which amount to cluster-admin. Narrow the rules with `rbac.namespaces` and `rbac.rules`, and limit what plans and applies may touch with `allowedNamespaces`. Whatever you grant, the agent needs `get` on the `kube-system` namespace to start.
+
+Without `rbac.namespaces`, the agent's ClusterRole is aggregated. To let it manage a custom resource, add a ClusterRole for the resource's group with the label `admiral.io/aggregate-to-agent: "true"`. Name the resources, never `*`:
+
+```yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: admiral-k8s-agent-widgets
+  labels:
+    admiral.io/aggregate-to-agent: "true"
+rules:
+  - apiGroups: ["example.com"]
+    resources: ["widgets"]
+    verbs: ["get", "patch", "create", "delete"]
+```
+
+Every cluster-wide agent in the cluster picks up a role with that label. With `rbac.namespaces`, add the rules to `rbac.rules` instead.
+
+## Pod Security
+
+The pod meets the `restricted` Pod Security Standard. Enforce it on the release namespace:
+
+```bash
+kubectl label namespace admiral-system \
+  pod-security.kubernetes.io/enforce=restricted \
+  pod-security.kubernetes.io/warn=restricted
+```
+
+## Upgrading
+
+An upgrade starts the new pod before stopping the old one, and stops the old one only once the new one has reached Admiral. A new pod that cannot reach Admiral leaves the old agent running. Running jobs get `shutdownDrain` to finish.
 
 {{ template "chart.requirementsSection" . }}
 
