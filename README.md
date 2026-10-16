@@ -1,6 +1,8 @@
 # Admiral Helm Charts
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+[![Chart Publish](https://github.com/admiral-io/admiral-helm/actions/workflows/publish.yaml/badge.svg?branch=master)](https://github.com/admiral-io/admiral-helm/actions/workflows/publish.yaml)
+[![Artifact Hub](https://img.shields.io/endpoint?url=https://artifacthub.io/badge/repository/admiral)](https://artifacthub.io/packages/search?repo=admiral)
 
 Helm charts for running [Admiral](https://admiral.io/?utm_source=github&utm_medium=referral&utm_campaign=admiral-helm) components in your
 Kubernetes clusters.
