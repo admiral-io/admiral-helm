@@ -91,7 +91,6 @@ RBAC rules for the ClusterRole, or for each Role when rbac.namespaces is set.
     - limitranges
     - persistentvolumeclaims
     - persistentvolumes
-    - pods
     - resourcequotas
     - secrets
     - serviceaccounts
@@ -100,9 +99,17 @@ RBAC rules for the ClusterRole, or for each Role when rbac.namespaces is set.
 - apiGroups: ["apps"]
   resources: ["daemonsets", "deployments", "statefulsets"]
   verbs: ["get", "patch", "create", "delete"]
+# Watch lets an apply see a hook Job or Pod finish even when it is deleted
+# at once, as a Job with ttlSecondsAfterFinished: 0 is.
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["get", "patch", "create", "delete", "watch"]
 - apiGroups: ["batch"]
-  resources: ["cronjobs", "jobs"]
+  resources: ["cronjobs"]
   verbs: ["get", "patch", "create", "delete"]
+- apiGroups: ["batch"]
+  resources: ["jobs"]
+  verbs: ["get", "patch", "create", "delete", "watch"]
 - apiGroups: ["autoscaling"]
   resources: ["horizontalpodautoscalers"]
   verbs: ["get", "patch", "create", "delete"]
