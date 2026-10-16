@@ -13,7 +13,7 @@ keywords:
   - platform-engineering
   - continuous-delivery
 type: application
-version: 0.6.0
+version: 0.7.0
 appVersion: v0.1.0
 maintainers:
   - name: Admiral Contributors
@@ -29,7 +29,13 @@ annotations:
     - name: Support
       url: https://github.com/admiral-io/admiral-community
   artifacthub.io/changes: |
+    - kind: security
+      description: The default rules name each built-in kind instead of granting every resource, and the cluster-wide ClusterRole is aggregated, so custom resources are added with a labeled ClusterRole
     - kind: changed
-      description: admiral.agentId (ADMIRAL_AGENT_ID) replaces admiral.clusterId
+      description: Upgrades roll the new pod out before stopping the old one, instead of Recreate
+    - kind: changed
+      description: The enrollment key is mounted as a file (ADMIRAL_ENROLLMENT_KEY_FILE) instead of an environment variable
+    - kind: changed
+      description: Default resources with a 1Gi memory limit, a linux nodeSelector, and JSON logs
     - kind: added
-      description: applyConcurrency and applyHealthTimeout, and delete in the default rules, for applying
+      description: allowedNamespaces, maxArtifactSize, kubeQPS, kubeBurst, logFormat and admiral.ca

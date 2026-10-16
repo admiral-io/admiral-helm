@@ -79,9 +79,51 @@ RBAC rules for the ClusterRole, or for each Role when rbac.namespaces is set.
 {{- if .Values.rbac.rules }}
 {{- toYaml .Values.rbac.rules }}
 {{- else -}}
-- apiGroups: ["*"]
-  resources: ["*"]
-  verbs: ["get", "list", "patch", "create", "delete"]
+# Every kind is named. A wildcard resource also matches subresources such as
+# serviceaccounts/token, pods/exec and nodes/proxy, which amount to
+# cluster-admin. The same list as the agent's manifests/rbac/role.yaml.
+- apiGroups: [""]
+  resources: ["namespaces"]
+  verbs: ["get", "list", "patch", "create"]
+- apiGroups: [""]
+  resources:
+    - configmaps
+    - limitranges
+    - persistentvolumeclaims
+    - persistentvolumes
+    - pods
+    - resourcequotas
+    - secrets
+    - serviceaccounts
+    - services
+  verbs: ["get", "patch", "create", "delete"]
+- apiGroups: ["apps"]
+  resources: ["daemonsets", "deployments", "statefulsets"]
+  verbs: ["get", "patch", "create", "delete"]
+- apiGroups: ["batch"]
+  resources: ["cronjobs", "jobs"]
+  verbs: ["get", "patch", "create", "delete"]
+- apiGroups: ["autoscaling"]
+  resources: ["horizontalpodautoscalers"]
+  verbs: ["get", "patch", "create", "delete"]
+- apiGroups: ["policy"]
+  resources: ["poddisruptionbudgets"]
+  verbs: ["get", "patch", "create", "delete"]
+- apiGroups: ["networking.k8s.io"]
+  resources: ["ingressclasses", "ingresses", "networkpolicies"]
+  verbs: ["get", "patch", "create", "delete"]
+- apiGroups: ["rbac.authorization.k8s.io"]
+  resources: ["clusterrolebindings", "clusterroles", "rolebindings", "roles"]
+  verbs: ["get", "patch", "create", "delete"]
+- apiGroups: ["scheduling.k8s.io"]
+  resources: ["priorityclasses"]
+  verbs: ["get", "patch", "create", "delete"]
+- apiGroups: ["storage.k8s.io"]
+  resources: ["storageclasses"]
+  verbs: ["get", "patch", "create", "delete"]
+- apiGroups: ["apiextensions.k8s.io"]
+  resources: ["customresourcedefinitions"]
+  verbs: ["get", "patch", "create", "delete"]
 {{- end }}
 {{- end }}
 
@@ -112,4 +154,20 @@ Usage: {{ include "admiral-k8s-agent.tplvalues.render" (dict "value" .Values.foo
 {{- else }}
 {{- tpl (.value | toYaml) .context }}
 {{- end }}
+{{- end }}
+
+{{/*
+Values added after a release was installed are missing under
+`helm upgrade --reuse-values`, so each falls back to its default here.
+*/}}
+{{- define "admiral-k8s-agent.logFormat" -}}
+{{- .Values.logFormat | default "json" }}
+{{- end }}
+
+{{- define "admiral-k8s-agent.caConfigMap" -}}
+{{- (.Values.admiral.ca | default dict).configMap | default "" }}
+{{- end }}
+
+{{- define "admiral-k8s-agent.caKey" -}}
+{{- (.Values.admiral.ca | default dict).key | default "ca.crt" }}
 {{- end }}

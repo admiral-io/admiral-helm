@@ -1,6 +1,6 @@
 # admiral-k8s-agent
 
-![Version: 0.6.0](https://img.shields.io/badge/Version-0.6.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: v0.1.0](https://img.shields.io/badge/AppVersion-v0.1.0-informational?style=flat-square)
+![Version: 0.7.0](https://img.shields.io/badge/Version-0.7.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: v0.1.0](https://img.shields.io/badge/AppVersion-v0.1.0-informational?style=flat-square)
 
 Connects a Kubernetes cluster to Admiral over an outbound-only connection, and plans and applies changes with server-side apply.
 
@@ -66,23 +66,58 @@ Then add `--set enrollment.existingSecret=admiral-k8s-agent-enrollment`. The key
 
 ## Permissions
 
-A dry-run apply is authorized as a real write, and an apply deletes what a component no longer renders, finished hooks and objects it replaces. So the default rules grant `get`, `list`, `patch`, `create` and `delete` on every resource. Narrow them with `rbac.namespaces` and `rbac.rules`. Whatever you grant, the agent needs `get` on the `kube-system` namespace to start.
+A dry-run apply is authorized as a real write, and an apply deletes what a component no longer renders, finished hooks and objects it replaces. So the default rules grant `get`, `patch`, `create` and `delete` on the built-in kinds most charts render. Each kind is named, because a wildcard also grants subresources such as `pods/exec` and `serviceaccounts/token`, which amount to cluster-admin. Narrow the rules with `rbac.namespaces` and `rbac.rules`, and limit what plans and applies may touch with `allowedNamespaces`. Whatever you grant, the agent needs `get` on the `kube-system` namespace to start.
+
+Without `rbac.namespaces`, the agent's ClusterRole is aggregated. To let it manage a custom resource, add a ClusterRole for the resource's group with the label `admiral.io/aggregate-to-agent: "true"`. Name the resources, never `*`:
+
+```yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: admiral-k8s-agent-widgets
+  labels:
+    admiral.io/aggregate-to-agent: "true"
+rules:
+  - apiGroups: ["example.com"]
+    resources: ["widgets"]
+    verbs: ["get", "patch", "create", "delete"]
+```
+
+Every cluster-wide agent in the cluster picks up a role with that label. With `rbac.namespaces`, add the rules to `rbac.rules` instead.
+
+## Pod Security
+
+The pod meets the `restricted` Pod Security Standard. Enforce it on the release namespace:
+
+```bash
+kubectl label namespace admiral-system \
+  pod-security.kubernetes.io/enforce=restricted \
+  pod-security.kubernetes.io/warn=restricted
+```
+
+## Upgrading
+
+An upgrade starts the new pod before stopping the old one, and stops the old one only once the new one has reached Admiral. A new pod that cannot reach Admiral leaves the old agent running. Running jobs get `shutdownDrain` to finish.
 
 ## Values
 
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
-| admiral | object | `{"agentId":"","audience":"admiral.io","insecure":false,"server":""}` | How the agent reaches Admiral and which agent it is. |
+| admiral | object | `{"agentId":"","audience":"admiral.io","ca":{"configMap":"","key":"ca.crt"},"insecure":false,"server":""}` | How the agent reaches Admiral and which agent it is. |
 | admiral.agentId | string | `""` | The agent in Admiral this release runs as, an `agt-` id. Admiral checks the service-account token against that agent's provider and subject. Sets `ADMIRAL_AGENT_ID`. Required. |
 | admiral.audience | string | `"admiral.io"` | Audience of the projected service-account token the agent presents to Admiral. It must match the audience your Admiral installation expects. |
-| admiral.insecure | bool | `false` | Connect to Admiral without TLS. For local development only. Sets `ADMIRAL_INSECURE`. |
+| admiral.ca | object | `{"configMap":"","key":"ca.crt"}` | Trust a private certificate authority for Admiral, beside the system's. Names a ConfigMap in the release namespace holding PEM certificates. Sets `ADMIRAL_CA_FILE`. |
+| admiral.ca.configMap | string | `""` | Name of the ConfigMap. Empty trusts the system's authorities only. |
+| admiral.ca.key | string | `"ca.crt"` | Key within the ConfigMap that holds the certificates. |
+| admiral.insecure | bool | `false` | Connect to Admiral without TLS. For local development only: the agent warns at start and will not enroll this way. Sets `ADMIRAL_INSECURE`. |
 | admiral.server | string | `""` | Admiral's address (`host:port`). Sets `ADMIRAL_SERVER`. Required. |
 | affinity | object | `{}` | Affinity rules for pod assignment |
+| allowedNamespaces | list | `[]` | The only namespaces plans and applies may read or write. A plan or apply that touches another namespace fails. Empty means any namespace the agent's RBAC allows. Sets `ADMIRAL_ALLOWED_NAMESPACES`. |
 | applyConcurrency | int | `1` | How many applies the agent runs at once, from 1 to 64. Sets `ADMIRAL_APPLY_CONCURRENCY`. |
 | applyHealthTimeout | string | `"5m"` | How long one component's objects, and each of its hooks, may take to become ready during an apply. Sets `ADMIRAL_APPLY_HEALTH_TIMEOUT`. Write it in hours, minutes and seconds (`5m`, `1h`). |
 | enrollment | object | `{"existingSecret":"","existingSecretKey":"key"}` | Enrollment sends the cluster's service-account signing keys to Admiral once, for a cluster whose keys Admiral cannot fetch (a private cluster, or kind). Create a single-use enrollment key in Admiral, store it in a Secret in the release namespace, and name that Secret here. The key is spent on first use. You can delete the Secret afterwards, and the agent still starts. |
 | enrollment.existingSecret | string | `""` | Name of a Secret holding the enrollment key. Empty means the agent does not enroll. |
-| enrollment.existingSecretKey | string | `"key"` | Key within `existingSecret` that holds the enrollment key. Sets `ADMIRAL_ENROLLMENT_KEY`. |
+| enrollment.existingSecretKey | string | `"key"` | Key within `existingSecret` that holds the enrollment key. The key is mounted as a file, so it does not show in the pod's environment. Sets `ADMIRAL_ENROLLMENT_KEY_FILE`. |
 | extraArgs | list | `[]` | Extra arguments appended to the agent's `run` command |
 | extraEnv | list | `[]` | Extra environment variables for the agent container. The agent honors `HTTPS_PROXY`. |
 | fullnameOverride | string | `""` | Override the full release name |
@@ -91,11 +126,15 @@ A dry-run apply is authorized as a real write, and an apply deletes what a compo
 | image.repository | string | `"ghcr.io/admiral-io/admiral-k8s-agent"` | Image repository |
 | image.tag | string | `""` | Overrides the image tag whose default is the chart appVersion |
 | imagePullSecrets | list | `[]` | Image pull secrets for private registries |
+| kubeBurst | int | `100` | Requests the agent may send at once above `kubeQPS`. Sets `ADMIRAL_KUBE_BURST`. |
+| kubeQPS | int | `50` | Requests per second the agent sends the Kubernetes API, shared by all its jobs. Sets `ADMIRAL_KUBE_QPS`. |
+| logFormat | string | `"json"` | Log format, `json` or `text`. Sets `ADMIRAL_LOG_FORMAT`. |
+| maxArtifactSize | string | `"16Mi"` | The most a job's artifact may expand to, from `1Mi` to `512Mi`. A larger artifact fails its job. A plan holds about 16 times this, so raise the memory limit with it. Sets `ADMIRAL_MAX_ARTIFACT_SIZE`. |
 | nameOverride | string | `""` | Override the chart name |
 | networkPolicy | object | `{"enabled":false,"extraEgress":[]}` | NetworkPolicy that limits the agent's outbound traffic to DNS (port 53), the Kubernetes API server (ports 443 and 6443, since many clusters serve the API on 6443 behind the `kubernetes` Service), and Admiral (the port in `admiral.server`, 443 when none is given). The rules match by port only, because the chart cannot know the addresses behind them. Inbound traffic is left alone: the agent accepts none except its health checks. |
 | networkPolicy.enabled | bool | `false` | Create the NetworkPolicy |
 | networkPolicy.extraEgress | list | `[]` | Additional egress rules, for example to reach an HTTPS proxy |
-| nodeSelector | object | `{}` | Node selector for pod assignment |
+| nodeSelector | object | `{"kubernetes.io/os":"linux"}` | Node selector for pod assignment. The image is built for Linux only. |
 | planConcurrency | int | `2` | How many plans the agent runs at once, from 1 to 64. Sets `ADMIRAL_PLAN_CONCURRENCY`. |
 | podAnnotations | object | `{}` | Annotations to add to the pod |
 | podLabels | object | `{}` | Labels to add to the pod |
@@ -103,9 +142,9 @@ A dry-run apply is authorized as a real write, and an apply deletes what a compo
 | priorityClassName | string | `""` | Priority class for the pod |
 | rbac | object | `{"create":true,"namespaces":[],"rules":[]}` | What the agent may do in the cluster. A plan reads live objects and runs a server-side apply dry run; an apply does the same for real. Kubernetes authorizes either as a patch for an object that exists and a create for one that does not. An apply also deletes: objects a component no longer renders, finished hooks, and objects it replaces. So the agent needs `get`, `patch`, `create` and `delete` on every kind it manages. |
 | rbac.create | bool | `true` | Create the RBAC objects. Set false to bind the service account yourself. |
-| rbac.namespaces | list | `[]` | Namespaces the agent may deploy to. Empty grants the rules in every namespace through one ClusterRole. When set, the chart creates a Role and RoleBinding in each listed namespace, plus a small ClusterRole that lets the agent get the `kube-system` namespace (it reports that namespace's UID at startup) and list namespaces (to find where it may write). The listed namespaces must already exist. |
-| rbac.rules | list | `[]` | Rules for the ClusterRole, or for each Role when `namespaces` is set. Empty uses `get`, `list`, `patch`, `create` and `delete` on every resource. Replaces the default entirely; values are not merged. |
-| resources | object | `{}` | Resource requests and limits |
+| rbac.namespaces | list | `[]` | Namespaces the agent may deploy to. Empty grants the rules in every namespace through one aggregated ClusterRole. To manage a custom resource then, add a ClusterRole for its group labeled `admiral.io/aggregate-to-agent: "true"`. When set, the chart creates a Role and RoleBinding in each listed namespace, plus a small ClusterRole that lets the agent get the `kube-system` namespace (it reports that namespace's UID at startup) and list namespaces (to find where it may write). The listed namespaces must already exist. |
+| rbac.rules | list | `[]` | Rules for the ClusterRole, or for each Role when `namespaces` is set. Empty grants `get`, `patch`, `create` and `delete` on the built-in kinds most charts render, each named, with no wildcard. Replaces the default entirely; values are not merged. |
+| resources | object | `{"limits":{"cpu":"500m","memory":"1Gi"},"requests":{"cpu":"50m","memory":"64Mi"}}` | Resource requests and limits. The 1Gi limit covers two plans and an apply at the default `maxArtifactSize`. To accept larger artifacts or run more jobs at once, raise it by 16 times the extra size for each job slot. The agent sets Go's soft memory limit to 90% of the container's. |
 | securityContext | object | `{"allowPrivilegeEscalation":false,"capabilities":{"drop":["ALL"]},"readOnlyRootFilesystem":true,"runAsNonRoot":true}` | Container security context |
 | serviceAccount | object | `{"annotations":{},"create":true,"name":""}` | Service account the agent runs as. Its projected token is the agent's identity to Admiral. |
 | serviceAccount.annotations | object | `{}` | Annotations to add to the service account |

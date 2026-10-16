@@ -11,6 +11,17 @@
                 "audience": {
                     "type": "string"
                 },
+                "ca": {
+                    "type": "object",
+                    "properties": {
+                        "configMap": {
+                            "type": "string"
+                        },
+                        "key": {
+                            "type": "string"
+                        }
+                    }
+                },
                 "insecure": {
                     "type": "boolean"
                 },
@@ -21,6 +32,9 @@
         },
         "affinity": {
             "type": "object"
+        },
+        "allowedNamespaces": {
+            "type": "array"
         },
         "applyConcurrency": {
             "type": "integer"
@@ -65,6 +79,18 @@
         "imagePullSecrets": {
             "type": "array"
         },
+        "kubeBurst": {
+            "type": "integer"
+        },
+        "kubeQPS": {
+            "type": "integer"
+        },
+        "logFormat": {
+            "type": "string"
+        },
+        "maxArtifactSize": {
+            "type": "string"
+        },
         "nameOverride": {
             "type": "string"
         },
@@ -80,7 +106,12 @@
             }
         },
         "nodeSelector": {
-            "type": "object"
+            "type": "object",
+            "properties": {
+                "kubernetes.io/os": {
+                    "type": "string"
+                }
+            }
         },
         "planConcurrency": {
             "type": "integer"
@@ -134,7 +165,31 @@
             }
         },
         "resources": {
-            "type": "object"
+            "type": "object",
+            "properties": {
+                "limits": {
+                    "type": "object",
+                    "properties": {
+                        "cpu": {
+                            "type": "string"
+                        },
+                        "memory": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "requests": {
+                    "type": "object",
+                    "properties": {
+                        "cpu": {
+                            "type": "string"
+                        },
+                        "memory": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
         },
         "securityContext": {
             "type": "object",
