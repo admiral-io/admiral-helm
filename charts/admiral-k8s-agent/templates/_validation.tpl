@@ -25,6 +25,15 @@ Produces clear error messages when required settings are missing.
   {{- fail (printf "\n\nADMIRAL K8S-AGENT CONFIGURATION ERROR:\n  logFormat must be json or text (got %q).\n" $logFormat) }}
 {{- end }}
 
+{{/* --- Replicas --- */}}
+{{- $replicas := int .Values.replicas }}
+{{- if lt $replicas 1 }}
+  {{- fail (printf "\n\nADMIRAL K8S-AGENT CONFIGURATION ERROR:\n  replicas must be at least 1 (got %v).\n" .Values.replicas) }}
+{{- end }}
+{{- if and (gt $replicas 1) (not .Values.leaderElect) }}
+  {{- fail "\n\nADMIRAL K8S-AGENT CONFIGURATION ERROR:\n  replicas above 1 need leaderElect, or every pod claims work.\n" }}
+{{- end }}
+
 {{/* --- Plan concurrency --- */}}
 {{- $pc := int .Values.planConcurrency }}
 {{- if or (lt $pc 1) (gt $pc 64) }}

@@ -1,6 +1,6 @@
 # admiral-k8s-agent
 
-![Version: 0.7.1](https://img.shields.io/badge/Version-0.7.1-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: v0.1.0](https://img.shields.io/badge/AppVersion-v0.1.0-informational?style=flat-square)
+![Version: 0.8.0](https://img.shields.io/badge/Version-0.8.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: v0.1.0](https://img.shields.io/badge/AppVersion-v0.1.0-informational?style=flat-square)
 
 Connects a Kubernetes cluster to Admiral over an outbound-only connection, and plans and applies changes with server-side apply.
 
@@ -12,9 +12,9 @@ The Admiral Kubernetes Agent runs in your cluster, takes work from Admiral, and 
 
 The chart installs one agent:
 
-- a Deployment with a single replica
+- a Deployment, one replica by default. Its pods elect a leader through a Lease, and only the leader claims jobs, so more replicas add failover, not throughput.
 - a ServiceAccount, whose projected token (audience `admiral.audience`) is the agent's identity to Admiral. The agent holds no long-lived credential.
-- RBAC for what the agent may deploy, and a binding to `system:service-account-issuer-discovery` so it can read the cluster's token signing keys
+- RBAC for what the agent may deploy, a Role to hold its Lease in the release namespace, and a binding to `system:service-account-issuer-discovery` so it can read the cluster's token signing keys
 - optionally, an egress-only NetworkPolicy
 
 In Admiral, create a workload identity provider for the cluster, then create each agent with its subject, `system:serviceaccount:<namespace>:<service account>`, and note the agent's `agt-` id. Several agents in one cluster share the provider.
@@ -97,7 +97,7 @@ kubectl label namespace admiral-system \
 
 ## Upgrading
 
-An upgrade starts the new pod before stopping the old one, and stops the old one only once the new one has reached Admiral. A new pod that cannot reach Admiral leaves the old agent running. Running jobs get `shutdownDrain` to finish.
+An upgrade starts the new pod before stopping the old one, and stops the old one only once the new one can read the Lease and is connected to Admiral. A new pod that cannot reach Admiral leaves the old agent running. Running jobs get `shutdownDrain` to finish, then the old pod releases the Lease and the new one takes over.
 
 ## Values
 
@@ -128,6 +128,7 @@ An upgrade starts the new pod before stopping the old one, and stops the old one
 | imagePullSecrets | list | `[]` | Image pull secrets for private registries |
 | kubeBurst | int | `100` | Requests the agent may send at once above `kubeQPS`. Sets `ADMIRAL_KUBE_BURST`. |
 | kubeQPS | int | `50` | Requests per second the agent sends the Kubernetes API, shared by all its jobs. Sets `ADMIRAL_KUBE_QPS`. |
+| leaderElect | bool | `true` | Elect one leader among the agent's pods through the Lease `admiral-k8s-agent-<agent id>` in the release namespace. The others stand by and take over when it stops. With `rbac.create`, the chart grants get, create and update on Leases in the release namespace. Set false only for one replica that should not hold a Lease. Sets `ADMIRAL_LEADER_ELECT`. |
 | logFormat | string | `"json"` | Log format, `json` or `text`. Sets `ADMIRAL_LOG_FORMAT`. |
 | maxArtifactSize | string | `"16Mi"` | The most a job's artifact may expand to, from `1Mi` to `512Mi`. A larger artifact fails its job. A plan holds about 16 times this, so raise the memory limit with it. Sets `ADMIRAL_MAX_ARTIFACT_SIZE`. |
 | nameOverride | string | `""` | Override the chart name |
@@ -144,6 +145,7 @@ An upgrade starts the new pod before stopping the old one, and stops the old one
 | rbac.create | bool | `true` | Create the RBAC objects. Set false to bind the service account yourself. |
 | rbac.namespaces | list | `[]` | Namespaces the agent may deploy to. Empty grants the rules in every namespace through one aggregated ClusterRole. To manage a custom resource then, add a ClusterRole for its group labeled `admiral.io/aggregate-to-agent: "true"`. When set, the chart creates a Role and RoleBinding in each listed namespace, plus a small ClusterRole that lets the agent get the `kube-system` namespace (it reports that namespace's UID at startup) and list namespaces (to find where it may write). The listed namespaces must already exist. |
 | rbac.rules | list | `[]` | Rules for the ClusterRole, or for each Role when `namespaces` is set. Empty grants `get`, `patch`, `create` and `delete` on the built-in kinds most charts render, each named, with no wildcard, and `watch` on Jobs and Pods, which lets an apply see a hook finish even when its TTL deletes it at once. Replaces the default entirely; values are not merged. Rules without `watch` work, and the agent polls hooks instead. |
+| replicas | int | `1` | Pods for this agent. Only the elected leader claims jobs, so more than one adds failover, not throughput. Needs `leaderElect`. |
 | resources | object | `{"limits":{"cpu":"500m","memory":"1Gi"},"requests":{"cpu":"50m","memory":"64Mi"}}` | Resource requests and limits. The 1Gi limit covers two plans and an apply at the default `maxArtifactSize`. To accept larger artifacts or run more jobs at once, raise it by 16 times the extra size for each job slot. The agent sets Go's soft memory limit to 90% of the container's. |
 | securityContext | object | `{"allowPrivilegeEscalation":false,"capabilities":{"drop":["ALL"]},"readOnlyRootFilesystem":true,"runAsNonRoot":true}` | Container security context |
 | serviceAccount | object | `{"annotations":{},"create":true,"name":""}` | Service account the agent runs as. Its projected token is the agent's identity to Admiral. |
