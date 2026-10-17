@@ -12,13 +12,14 @@ metadata:
 # Aggregated: Kubernetes fills this role with the rules of this release's
 # own ClusterRole below, and of every ClusterRole labeled
 # admiral.io/aggregate-to-agent: "true", such as one for a custom resource.
+# The chart leaves rules out, because the aggregation controller owns them
+# and Helm's server-side apply would conflict with it on upgrade.
 aggregationRule:
   clusterRoleSelectors:
     - matchLabels:
         admiral.io/aggregate-to-agent: "true"
     - matchLabels:
         admiral.io/aggregate-to: {{ $aggregateTo }}
-rules: []
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
@@ -75,6 +76,39 @@ subjects:
   - kind: ServiceAccount
     name: {{ $sa }}
     namespace: {{ .Release.Namespace }}
+{{- if eq (include "admiral-k8s-agent.leaderElect" .) "true" }}
+---
+# Lets the agent's pods elect a leader through the Lease
+# admiral-k8s-agent-<agent id> in the release namespace. Kubernetes cannot
+# limit create to one name, so the rule covers every Lease in this namespace.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: {{ include "admiral-k8s-agent.fullname" . }}-leader-election
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "admiral-k8s-agent.labels" . | nindent 4 }}
+rules:
+  - apiGroups: ["coordination.k8s.io"]
+    resources: ["leases"]
+    verbs: ["get", "create", "update"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ include "admiral-k8s-agent.fullname" . }}-leader-election
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "admiral-k8s-agent.labels" . | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: {{ include "admiral-k8s-agent.fullname" . }}-leader-election
+subjects:
+  - kind: ServiceAccount
+    name: {{ $sa }}
+    namespace: {{ .Release.Namespace }}
+{{- end }}
 {{- range .Values.rbac.namespaces }}
 ---
 apiVersion: rbac.authorization.k8s.io/v1

@@ -13,7 +13,7 @@ keywords:
   - platform-engineering
   - continuous-delivery
 type: application
-version: 0.7.1
+version: 0.8.0
 appVersion: v0.1.0
 maintainers:
   - name: Admiral Contributors
@@ -29,5 +29,9 @@ annotations:
     - name: Support
       url: https://github.com/admiral-io/admiral-community
   artifacthub.io/changes: |
-    - kind: changed
-      description: The default rules grant watch on Jobs and Pods, so an apply sees a hook finish even when its TTL deletes it at once
+    - kind: added
+      description: A Role and RoleBinding let the agent's pods elect a leader through a Lease in the release namespace
+    - kind: added
+      description: The replicas and leaderElect values, so an agent can run a standby pod
+    - kind: fixed
+      description: helm upgrade no longer fails under Helm 4's server-side apply with a conflict on the aggregated ClusterRole's rules

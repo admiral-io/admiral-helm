@@ -12,9 +12,9 @@ The Admiral Kubernetes Agent runs in your cluster, takes work from Admiral, and 
 
 The chart installs one agent:
 
-- a Deployment with a single replica
+- a Deployment, one replica by default. Its pods elect a leader through a Lease, and only the leader claims jobs, so more replicas add failover, not throughput.
 - a ServiceAccount, whose projected token (audience `admiral.audience`) is the agent's identity to Admiral. The agent holds no long-lived credential.
-- RBAC for what the agent may deploy, and a binding to `system:service-account-issuer-discovery` so it can read the cluster's token signing keys
+- RBAC for what the agent may deploy, a Role to hold its Lease in the release namespace, and a binding to `system:service-account-issuer-discovery` so it can read the cluster's token signing keys
 - optionally, an egress-only NetworkPolicy
 
 In Admiral, create a workload identity provider for the cluster, then create each agent with its subject, `system:serviceaccount:<namespace>:<service account>`, and note the agent's `agt-` id. Several agents in one cluster share the provider.
@@ -97,7 +97,7 @@ kubectl label namespace admiral-system \
 
 ## Upgrading
 
-An upgrade starts the new pod before stopping the old one, and stops the old one only once the new one has reached Admiral. A new pod that cannot reach Admiral leaves the old agent running. Running jobs get `shutdownDrain` to finish.
+An upgrade starts the new pod before stopping the old one, and stops the old one only once the new one can read the Lease and is connected to Admiral. A new pod that cannot reach Admiral leaves the old agent running. Running jobs get `shutdownDrain` to finish, then the old pod releases the Lease and the new one takes over.
 
 {{ template "chart.requirementsSection" . }}
 
