@@ -70,7 +70,8 @@ enrollment:
 # authorizes either as a patch for an object that exists and a create for one
 # that does not. An apply also deletes: objects a component no longer renders,
 # finished hooks, and objects it replaces. So the agent needs `get`, `patch`,
-# `create` and `delete` on every kind it manages.
+# `create` and `delete` on every kind it manages, and `watch` on the Jobs and
+# Pods it runs as hooks.
 rbac:
   # -- Create the RBAC objects. Set false to bind the service account yourself.
   create: true
@@ -85,8 +86,10 @@ rbac:
   namespaces: []
   # -- Rules for the ClusterRole, or for each Role when `namespaces` is set.
   # Empty grants `get`, `patch`, `create` and `delete` on the built-in kinds
-  # most charts render, each named, with no wildcard. Replaces the default
-  # entirely; values are not merged.
+  # most charts render, each named, with no wildcard, and `watch` on Jobs and
+  # Pods, which lets an apply see a hook finish even when its TTL deletes it
+  # at once. Replaces the default entirely; values are not merged. Rules
+  # without `watch` work, and the agent polls hooks instead.
   rules: []
     # - apiGroups: [""]
     #   resources: ["configmaps", "secrets", "services"]
