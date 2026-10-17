@@ -27,10 +27,10 @@ Produces clear error messages when required settings are missing.
 
 {{/* --- Replicas --- */}}
 {{- $replicas := int .Values.replicas }}
-{{- if lt $replicas 1 }}
+{{- if and (hasKey .Values "replicas") (lt $replicas 1) }}
   {{- fail (printf "\n\nADMIRAL K8S-AGENT CONFIGURATION ERROR:\n  replicas must be at least 1 (got %v).\n" .Values.replicas) }}
 {{- end }}
-{{- if and (gt $replicas 1) (not .Values.leaderElect) }}
+{{- if and (gt $replicas 1) (ne (include "admiral-k8s-agent.leaderElect" .) "true") }}
   {{- fail "\n\nADMIRAL K8S-AGENT CONFIGURATION ERROR:\n  replicas above 1 need leaderElect, or every pod claims work.\n" }}
 {{- end }}
 

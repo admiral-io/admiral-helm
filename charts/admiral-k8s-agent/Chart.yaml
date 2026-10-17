@@ -33,3 +33,5 @@ annotations:
       description: A Role and RoleBinding let the agent's pods elect a leader through a Lease in the release namespace
     - kind: added
       description: The replicas and leaderElect values, so an agent can run a standby pod
+    - kind: fixed
+      description: helm upgrade no longer fails under Helm 4's server-side apply with a conflict on the aggregated ClusterRole's rules

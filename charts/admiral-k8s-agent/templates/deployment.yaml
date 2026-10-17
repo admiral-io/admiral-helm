@@ -13,7 +13,7 @@ spec:
   # new one takes over. Agent v0.1.0 has no leader election, so there both
   # pods claim work until the old one stops; each job attempt runs under a
   # lease in one pod only.
-  replicas: {{ .Values.replicas }}
+  replicas: {{ include "admiral-k8s-agent.replicas" . }}
   strategy:
     type: RollingUpdate
     rollingUpdate:
@@ -77,7 +77,7 @@ spec:
             - name: ADMIRAL_NAMESPACE
               value: {{ .Release.Namespace | quote }}
             - name: ADMIRAL_LEADER_ELECT
-              value: {{ .Values.leaderElect | quote }}
+              value: {{ include "admiral-k8s-agent.leaderElect" . | quote }}
             - name: ADMIRAL_PLAN_CONCURRENCY
               value: {{ .Values.planConcurrency | quote }}
             - name: ADMIRAL_APPLY_CONCURRENCY

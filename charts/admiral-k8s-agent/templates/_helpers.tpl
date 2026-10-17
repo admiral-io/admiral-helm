@@ -171,6 +171,18 @@ Values added after a release was installed are missing under
 {{- .Values.logFormat | default "json" }}
 {{- end }}
 
+{{- define "admiral-k8s-agent.replicas" -}}
+{{- .Values.replicas | default 1 }}
+{{- end }}
+
+{{/*
+"true" or "false". A missing leaderElect means true; default cannot tell a
+missing value from false.
+*/}}
+{{- define "admiral-k8s-agent.leaderElect" -}}
+{{- if hasKey .Values "leaderElect" }}{{ .Values.leaderElect }}{{ else }}true{{ end }}
+{{- end }}
+
 {{- define "admiral-k8s-agent.caConfigMap" -}}
 {{- (.Values.admiral.ca | default dict).configMap | default "" }}
 {{- end }}
