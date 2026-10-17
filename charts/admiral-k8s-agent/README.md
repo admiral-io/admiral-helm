@@ -1,8 +1,8 @@
 # admiral-k8s-agent
 
-![Version: 0.7.1](https://img.shields.io/badge/Version-0.7.1-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: v0.1.0](https://img.shields.io/badge/AppVersion-v0.1.0-informational?style=flat-square)
+![Version: 0.8.0](https://img.shields.io/badge/Version-0.8.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: v0.2.0](https://img.shields.io/badge/AppVersion-v0.2.0-informational?style=flat-square)
 
-Connects a Kubernetes cluster to Admiral over an outbound-only connection, and plans and applies changes with server-side apply.
+Runs an Admiral agent in Kubernetes over an outbound-only connection, and plans and applies changes with server-side apply.
 
 [Admiral](https://admiral.io/?utm_source=artifacthub&utm_medium=referral&utm_campaign=admiral-k8s-agent) is a control plane for coordinating infrastructure and application delivery across environments. This chart installs the self-hosted agent that connects one of your clusters to it.
 
@@ -103,19 +103,19 @@ An upgrade starts the new pod before stopping the old one, and stops the old one
 
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
-| admiral | object | `{"agentId":"","audience":"admiral.io","ca":{"configMap":"","key":"ca.crt"},"insecure":false,"server":""}` | How the agent reaches Admiral and which agent it is. |
-| admiral.agentId | string | `""` | The agent in Admiral this release runs as, an `agt-` id. Admiral checks the service-account token against that agent's provider and subject. Sets `ADMIRAL_AGENT_ID`. Required. |
+| admiral | object | `{"audience":"admiral.io","ca":{"configMap":"","key":"ca.crt"},"insecure":false,"server":"api.admiral.io:443","serviceAccountId":""}` | How the agent reaches Admiral and which agent it is. |
 | admiral.audience | string | `"admiral.io"` | Audience of the projected service-account token the agent presents to Admiral. It must match the audience your Admiral installation expects. |
 | admiral.ca | object | `{"configMap":"","key":"ca.crt"}` | Trust a private certificate authority for Admiral, beside the system's. Names a ConfigMap in the release namespace holding PEM certificates. Sets `ADMIRAL_CA_FILE`. |
 | admiral.ca.configMap | string | `""` | Name of the ConfigMap. Empty trusts the system's authorities only. |
 | admiral.ca.key | string | `"ca.crt"` | Key within the ConfigMap that holds the certificates. |
 | admiral.insecure | bool | `false` | Connect to Admiral without TLS. For local development only: the agent warns at start and will not enroll this way. Sets `ADMIRAL_INSECURE`. |
-| admiral.server | string | `""` | Admiral's address (`host:port`). Sets `ADMIRAL_SERVER`. Required. |
+| admiral.server | string | `"api.admiral.io:443"` | Admiral's address (`host:port`). Sets `ADMIRAL_SERVER`. |
+| admiral.serviceAccountId | string | `""` | The Admiral service account the agent signs in as, an `sa-` id, which `admiral agent create` prints. Sets `ADMIRAL_SERVICE_ACCOUNT_ID`. Required. |
 | affinity | object | `{}` | Affinity rules for pod assignment |
 | allowedNamespaces | list | `[]` | The only namespaces plans and applies may read or write. A plan or apply that touches another namespace fails. Empty means any namespace the agent's RBAC allows. Sets `ADMIRAL_ALLOWED_NAMESPACES`. |
 | applyConcurrency | int | `1` | How many applies the agent runs at once, from 1 to 64. Sets `ADMIRAL_APPLY_CONCURRENCY`. |
 | applyHealthTimeout | string | `"5m"` | How long one component's objects, and each of its hooks, may take to become ready during an apply. Sets `ADMIRAL_APPLY_HEALTH_TIMEOUT`. Write it in hours, minutes and seconds (`5m`, `1h`). |
-| enrollment | object | `{"existingSecret":"","existingSecretKey":"key"}` | Enrollment sends the cluster's service-account signing keys to Admiral once, for a cluster whose keys Admiral cannot fetch (a private cluster, or kind). Create a single-use enrollment key in Admiral, store it in a Secret in the release namespace, and name that Secret here. The key is spent on first use. You can delete the Secret afterwards, and the agent still starts. |
+| enrollment | object | `{"existingSecret":"","existingSecretKey":"key"}` | Enrollment sends the cluster's service-account signing keys to Admiral once, so Admiral learns which issuer signs the agent's token and which subject to expect. `admiral agent create` prints a single-use enrollment key. Store it in a Secret in the release namespace, and name that Secret here. The key is spent on first use. You can delete the Secret afterwards, and the agent still starts. |
 | enrollment.existingSecret | string | `""` | Name of a Secret holding the enrollment key. Empty means the agent does not enroll. |
 | enrollment.existingSecretKey | string | `"key"` | Key within `existingSecret` that holds the enrollment key. The key is mounted as a file, so it does not show in the pod's environment. Sets `ADMIRAL_ENROLLMENT_KEY_FILE`. |
 | extraArgs | list | `[]` | Extra arguments appended to the agent's `run` command |
