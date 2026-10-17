@@ -4,6 +4,52 @@ entries:
   - annotations:
       artifacthub.io/category: integration-delivery
       artifacthub.io/changes: |
+        - kind: changed
+          description: admiral.serviceAccountId (ADMIRAL_SERVICE_ACCOUNT_ID) replaces admiral.agentId
+        - kind: changed
+          description: admiral.server defaults to api.admiral.io:443
+        - kind: added
+          description: A Role and RoleBinding let the agent's pods elect a leader through a Lease in the release namespace
+        - kind: added
+          description: The replicas and leaderElect values, so an agent can run a standby pod
+        - kind: fixed
+          description: helm upgrade no longer fails under Helm 4's server-side apply with a conflict on the aggregated ClusterRole's rules
+      artifacthub.io/displayName: Admiral Kubernetes Agent
+      artifacthub.io/license: Apache-2.0
+      artifacthub.io/links: |
+        - name: Documentation
+          url: https://admiral.io/docs?utm_source=artifacthub&utm_medium=referral&utm_campaign=admiral-k8s-agent
+        - name: Support
+          url: https://github.com/admiral-io/admiral-community
+    apiVersion: v2
+    appVersion: v0.2.0
+    created: "2026-10-17T02:03:29.506673867Z"
+    description: Runs an Admiral agent in Kubernetes over an outbound-only connection,
+      and plans and applies changes with server-side apply.
+    digest: 1a8de3dd7357be97cf81fbe5b31c24c5e14384b7b24ba4aaeba410df12fc7f80
+    home: https://admiral.io
+    icon: https://raw.githubusercontent.com/admiral-io/admiral-helm/master/assets/admiral-icon.svg
+    keywords:
+    - admiral
+    - kubernetes
+    - agent
+    - deployment
+    - platform-engineering
+    - continuous-delivery
+    maintainers:
+    - email: support@admiral.io
+      name: Admiral Contributors
+      url: https://github.com/admiral-io/admiral-helm
+    name: admiral-k8s-agent
+    sources:
+    - https://github.com/admiral-io/admiral-helm
+    type: application
+    urls:
+    - https://github.com/admiral-io/admiral-helm/releases/download/admiral-k8s-agent-0.9.0/admiral-k8s-agent-0.9.0.tgz
+    version: 0.9.0
+  - annotations:
+      artifacthub.io/category: integration-delivery
+      artifacthub.io/changes: |
         - kind: added
           description: A Role and RoleBinding let the agent's pods elect a leader through a Lease in the release namespace
         - kind: added
@@ -228,4 +274,4 @@ entries:
     urls:
     - https://github.com/admiral-io/admiral-helm/releases/download/admiral-k8s-agent-0.5.0/admiral-k8s-agent-0.5.0.tgz
     version: 0.5.0
-generated: "2026-10-17T01:55:12.105310978Z"
+generated: "2026-10-17T02:03:29.506689441Z"
