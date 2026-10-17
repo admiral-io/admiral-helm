@@ -6,12 +6,14 @@ metadata:
   labels:
     {{- include "admiral-k8s-agent.labels" . | nindent 4 }}
 spec:
-  # One agent per release. An upgrade starts the new pod first and stops the
-  # old one once the new one is ready, which takes a status report reaching
-  # Admiral, so a new pod that cannot reach Admiral leaves the old one
-  # running. Until then both claim work as the same agent; each job attempt
-  # runs under a lease in one pod only.
-  replicas: 1
+  # One agent per release, however many pods. Its pods elect a leader
+  # through a Lease, and only the leader claims jobs. An upgrade starts a new
+  # pod first, which stands by and is ready once it can read the Lease and is
+  # connected to Admiral. The old pod then stops, releases the Lease, and the
+  # new one takes over. Agent v0.1.0 has no leader election, so there both
+  # pods claim work until the old one stops; each job attempt runs under a
+  # lease in one pod only.
+  replicas: {{ include "admiral-k8s-agent.replicas" . }}
   strategy:
     type: RollingUpdate
     rollingUpdate:
@@ -74,6 +76,8 @@ spec:
               value: /var/run/secrets/admiral/token
             - name: ADMIRAL_NAMESPACE
               value: {{ .Release.Namespace | quote }}
+            - name: ADMIRAL_LEADER_ELECT
+              value: {{ include "admiral-k8s-agent.leaderElect" . | quote }}
             - name: ADMIRAL_PLAN_CONCURRENCY
               value: {{ .Values.planConcurrency | quote }}
             - name: ADMIRAL_APPLY_CONCURRENCY

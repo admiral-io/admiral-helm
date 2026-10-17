@@ -1,8 +1,8 @@
 # admiral-k8s-agent
 
-![Version: 0.7.1](https://img.shields.io/badge/Version-0.7.1-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: v0.1.0](https://img.shields.io/badge/AppVersion-v0.1.0-informational?style=flat-square)
+![Version: 0.9.0](https://img.shields.io/badge/Version-0.9.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: v0.2.0](https://img.shields.io/badge/AppVersion-v0.2.0-informational?style=flat-square)
 
-Connects a Kubernetes cluster to Admiral over an outbound-only connection, and plans and applies changes with server-side apply.
+Runs an Admiral agent in Kubernetes over an outbound-only connection, and plans and applies changes with server-side apply.
 
 [Admiral](https://admiral.io/?utm_source=artifacthub&utm_medium=referral&utm_campaign=admiral-k8s-agent) is a control plane for coordinating infrastructure and application delivery across environments. This chart installs the self-hosted agent that connects one of your clusters to it.
 
@@ -12,12 +12,12 @@ The Admiral Kubernetes Agent runs in your cluster, takes work from Admiral, and 
 
 The chart installs one agent:
 
-- a Deployment with a single replica
+- a Deployment, one replica by default. Its pods elect a leader through a Lease, and only the leader claims jobs, so more replicas add failover, not throughput.
 - a ServiceAccount, whose projected token (audience `admiral.audience`) is the agent's identity to Admiral. The agent holds no long-lived credential.
-- RBAC for what the agent may deploy, and a binding to `system:service-account-issuer-discovery` so it can read the cluster's token signing keys
+- RBAC for what the agent may deploy, a Role to hold its Lease in the release namespace, and a binding to `system:service-account-issuer-discovery` so it can read the cluster's token signing keys
 - optionally, an egress-only NetworkPolicy
 
-In Admiral, create a workload identity provider for the cluster, then create each agent with its subject, `system:serviceaccount:<namespace>:<service account>`, and note the agent's `agt-` id. Several agents in one cluster share the provider.
+In Admiral, run `admiral agent create` for each agent. It prints the Admiral service account the agent signs in as, an `sa-` id, and a single-use enrollment key (see [Enrollment](#enrollment)). The agent connects to `api.admiral.io:443`; set `admiral.server` for another Admiral.
 
 ```bash
 helm repo add admiral https://charts.admiral.io
@@ -33,8 +33,7 @@ The default. The agent may deploy to every namespace through one ClusterRole.
 ```bash
 helm install admiral-k8s-agent admiral/admiral-k8s-agent \
   --namespace admiral-system --create-namespace \
-  --set admiral.server=admiral.example.com:443 \
-  --set admiral.agentId=<agt- id> \
+  --set admiral.serviceAccountId=<sa- id> \
   --set serviceAccount.name=admiral-k8s-agent
 ```
 
@@ -45,8 +44,7 @@ To keep workloads apart, run one release per agent, each in its own namespace an
 ```bash
 helm install agent-payments admiral/admiral-k8s-agent \
   --namespace admiral-payments --create-namespace \
-  --set admiral.server=admiral.example.com:443 \
-  --set admiral.agentId=<agt- id> \
+  --set admiral.serviceAccountId=<sa- id> \
   --set serviceAccount.name=admiral-k8s-agent \
   --set 'rbac.namespaces={payments-prod}'
 ```
@@ -55,7 +53,7 @@ Every cluster-scoped object the chart creates is named after both the release an
 
 ## Enrollment
 
-If Admiral cannot fetch your cluster's service-account signing keys (a private cluster, or kind), the agent can send them once. Create a single-use enrollment key in Admiral and store it in the release namespace before you install:
+Enrollment sends the cluster's service-account signing keys to Admiral once, so Admiral learns which issuer signs the agent's token and which subject to expect. Store the enrollment key that `admiral agent create` printed in the release namespace before you install:
 
 ```bash
 kubectl --namespace admiral-system create secret generic admiral-k8s-agent-enrollment \
@@ -97,25 +95,25 @@ kubectl label namespace admiral-system \
 
 ## Upgrading
 
-An upgrade starts the new pod before stopping the old one, and stops the old one only once the new one has reached Admiral. A new pod that cannot reach Admiral leaves the old agent running. Running jobs get `shutdownDrain` to finish.
+An upgrade starts the new pod before stopping the old one, and stops the old one only once the new one can read the Lease and is connected to Admiral. A new pod that cannot reach Admiral leaves the old agent running. Running jobs get `shutdownDrain` to finish, then the old pod releases the Lease and the new one takes over.
 
 ## Values
 
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
-| admiral | object | `{"agentId":"","audience":"admiral.io","ca":{"configMap":"","key":"ca.crt"},"insecure":false,"server":""}` | How the agent reaches Admiral and which agent it is. |
-| admiral.agentId | string | `""` | The agent in Admiral this release runs as, an `agt-` id. Admiral checks the service-account token against that agent's provider and subject. Sets `ADMIRAL_AGENT_ID`. Required. |
+| admiral | object | `{"audience":"admiral.io","ca":{"configMap":"","key":"ca.crt"},"insecure":false,"server":"api.admiral.io:443","serviceAccountId":""}` | How the agent reaches Admiral and which agent it is. |
 | admiral.audience | string | `"admiral.io"` | Audience of the projected service-account token the agent presents to Admiral. It must match the audience your Admiral installation expects. |
 | admiral.ca | object | `{"configMap":"","key":"ca.crt"}` | Trust a private certificate authority for Admiral, beside the system's. Names a ConfigMap in the release namespace holding PEM certificates. Sets `ADMIRAL_CA_FILE`. |
 | admiral.ca.configMap | string | `""` | Name of the ConfigMap. Empty trusts the system's authorities only. |
 | admiral.ca.key | string | `"ca.crt"` | Key within the ConfigMap that holds the certificates. |
 | admiral.insecure | bool | `false` | Connect to Admiral without TLS. For local development only: the agent warns at start and will not enroll this way. Sets `ADMIRAL_INSECURE`. |
-| admiral.server | string | `""` | Admiral's address (`host:port`). Sets `ADMIRAL_SERVER`. Required. |
+| admiral.server | string | `"api.admiral.io:443"` | Admiral's address (`host:port`). Sets `ADMIRAL_SERVER`. |
+| admiral.serviceAccountId | string | `""` | The Admiral service account the agent signs in as, an `sa-` id, which `admiral agent create` prints. Sets `ADMIRAL_SERVICE_ACCOUNT_ID`. Required. |
 | affinity | object | `{}` | Affinity rules for pod assignment |
 | allowedNamespaces | list | `[]` | The only namespaces plans and applies may read or write. A plan or apply that touches another namespace fails. Empty means any namespace the agent's RBAC allows. Sets `ADMIRAL_ALLOWED_NAMESPACES`. |
 | applyConcurrency | int | `1` | How many applies the agent runs at once, from 1 to 64. Sets `ADMIRAL_APPLY_CONCURRENCY`. |
 | applyHealthTimeout | string | `"5m"` | How long one component's objects, and each of its hooks, may take to become ready during an apply. Sets `ADMIRAL_APPLY_HEALTH_TIMEOUT`. Write it in hours, minutes and seconds (`5m`, `1h`). |
-| enrollment | object | `{"existingSecret":"","existingSecretKey":"key"}` | Enrollment sends the cluster's service-account signing keys to Admiral once, for a cluster whose keys Admiral cannot fetch (a private cluster, or kind). Create a single-use enrollment key in Admiral, store it in a Secret in the release namespace, and name that Secret here. The key is spent on first use. You can delete the Secret afterwards, and the agent still starts. |
+| enrollment | object | `{"existingSecret":"","existingSecretKey":"key"}` | Enrollment sends the cluster's service-account signing keys to Admiral once, so Admiral learns which issuer signs the agent's token and which subject to expect. `admiral agent create` prints a single-use enrollment key. Store it in a Secret in the release namespace, and name that Secret here. The key is spent on first use. You can delete the Secret afterwards, and the agent still starts. |
 | enrollment.existingSecret | string | `""` | Name of a Secret holding the enrollment key. Empty means the agent does not enroll. |
 | enrollment.existingSecretKey | string | `"key"` | Key within `existingSecret` that holds the enrollment key. The key is mounted as a file, so it does not show in the pod's environment. Sets `ADMIRAL_ENROLLMENT_KEY_FILE`. |
 | extraArgs | list | `[]` | Extra arguments appended to the agent's `run` command |
@@ -128,6 +126,7 @@ An upgrade starts the new pod before stopping the old one, and stops the old one
 | imagePullSecrets | list | `[]` | Image pull secrets for private registries |
 | kubeBurst | int | `100` | Requests the agent may send at once above `kubeQPS`. Sets `ADMIRAL_KUBE_BURST`. |
 | kubeQPS | int | `50` | Requests per second the agent sends the Kubernetes API, shared by all its jobs. Sets `ADMIRAL_KUBE_QPS`. |
+| leaderElect | bool | `true` | Elect one leader among the agent's pods through the Lease `admiral-k8s-agent-<service account id>` in the release namespace. The others stand by and take over when it stops. With `rbac.create`, the chart grants get, create and update on Leases in the release namespace. Set false only for one replica that should not hold a Lease. Sets `ADMIRAL_LEADER_ELECT`. |
 | logFormat | string | `"json"` | Log format, `json` or `text`. Sets `ADMIRAL_LOG_FORMAT`. |
 | maxArtifactSize | string | `"16Mi"` | The most a job's artifact may expand to, from `1Mi` to `512Mi`. A larger artifact fails its job. A plan holds about 16 times this, so raise the memory limit with it. Sets `ADMIRAL_MAX_ARTIFACT_SIZE`. |
 | nameOverride | string | `""` | Override the chart name |
@@ -144,6 +143,7 @@ An upgrade starts the new pod before stopping the old one, and stops the old one
 | rbac.create | bool | `true` | Create the RBAC objects. Set false to bind the service account yourself. |
 | rbac.namespaces | list | `[]` | Namespaces the agent may deploy to. Empty grants the rules in every namespace through one aggregated ClusterRole. To manage a custom resource then, add a ClusterRole for its group labeled `admiral.io/aggregate-to-agent: "true"`. When set, the chart creates a Role and RoleBinding in each listed namespace, plus a small ClusterRole that lets the agent get the `kube-system` namespace (it reports that namespace's UID at startup) and list namespaces (to find where it may write). The listed namespaces must already exist. |
 | rbac.rules | list | `[]` | Rules for the ClusterRole, or for each Role when `namespaces` is set. Empty grants `get`, `patch`, `create` and `delete` on the built-in kinds most charts render, each named, with no wildcard, and `watch` on Jobs and Pods, which lets an apply see a hook finish even when its TTL deletes it at once. Replaces the default entirely; values are not merged. Rules without `watch` work, and the agent polls hooks instead. |
+| replicas | int | `1` | Pods for this agent. Only the elected leader claims jobs, so more than one adds failover, not throughput. Needs `leaderElect`. |
 | resources | object | `{"limits":{"cpu":"500m","memory":"1Gi"},"requests":{"cpu":"50m","memory":"64Mi"}}` | Resource requests and limits. The 1Gi limit covers two plans and an apply at the default `maxArtifactSize`. To accept larger artifacts or run more jobs at once, raise it by 16 times the extra size for each job slot. The agent sets Go's soft memory limit to 90% of the container's. |
 | securityContext | object | `{"allowPrivilegeEscalation":false,"capabilities":{"drop":["ALL"]},"readOnlyRootFilesystem":true,"runAsNonRoot":true}` | Container security context |
 | serviceAccount | object | `{"annotations":{},"create":true,"name":""}` | Service account the agent runs as. Its projected token is the agent's identity to Admiral. |

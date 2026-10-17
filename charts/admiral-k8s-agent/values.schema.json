@@ -85,6 +85,9 @@
         "kubeQPS": {
             "type": "integer"
         },
+        "leaderElect": {
+            "type": "boolean"
+        },
         "logFormat": {
             "type": "string"
         },
@@ -163,6 +166,9 @@
                     "type": "array"
                 }
             }
+        },
+        "replicas": {
+            "type": "integer"
         },
         "resources": {
             "type": "object",

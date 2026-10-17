@@ -13,7 +13,7 @@ keywords:
   - platform-engineering
   - continuous-delivery
 type: application
-version: 0.8.0
+version: 0.9.0
 appVersion: v0.2.0
 maintainers:
   - name: Admiral Contributors
@@ -33,3 +33,9 @@ annotations:
       description: admiral.serviceAccountId (ADMIRAL_SERVICE_ACCOUNT_ID) replaces admiral.agentId
     - kind: changed
       description: admiral.server defaults to api.admiral.io:443
+    - kind: added
+      description: A Role and RoleBinding let the agent's pods elect a leader through a Lease in the release namespace
+    - kind: added
+      description: The replicas and leaderElect values, so an agent can run a standby pod
+    - kind: fixed
+      description: helm upgrade no longer fails under Helm 4's server-side apply with a conflict on the aggregated ClusterRole's rules

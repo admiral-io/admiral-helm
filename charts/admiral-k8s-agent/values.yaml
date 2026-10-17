@@ -1,8 +1,8 @@
 # Default values for admiral-k8s-agent.
 # This is a YAML-formatted file.
 #
-# The chart runs one agent as a single replica. To run several agents in one
-# cluster, install the chart once per agent, each in its own namespace.
+# The chart runs one agent. To run several agents in one cluster, install the
+# chart once per agent, each in its own namespace.
 
 # -- Container image configuration
 image:
@@ -111,6 +111,17 @@ serviceAccount:
 # =============================================================================
 # Agent
 # =============================================================================
+
+# -- Pods for this agent. Only the elected leader claims jobs, so more than
+# one adds failover, not throughput. Needs `leaderElect`.
+replicas: 1
+
+# -- Elect one leader among the agent's pods through the Lease
+# `admiral-k8s-agent-<service account id>` in the release namespace. The others stand
+# by and take over when it stops. With `rbac.create`, the chart grants get,
+# create and update on Leases in the release namespace. Set false only for
+# one replica that should not hold a Lease. Sets `ADMIRAL_LEADER_ELECT`.
+leaderElect: true
 
 # -- How many plans the agent runs at once, from 1 to 64. Sets
 # `ADMIRAL_PLAN_CONCURRENCY`.

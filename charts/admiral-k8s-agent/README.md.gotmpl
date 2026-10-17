@@ -12,12 +12,12 @@ The Admiral Kubernetes Agent runs in your cluster, takes work from Admiral, and 
 
 The chart installs one agent:
 
-- a Deployment with a single replica
+- a Deployment, one replica by default. Its pods elect a leader through a Lease, and only the leader claims jobs, so more replicas add failover, not throughput.
 - a ServiceAccount, whose projected token (audience `admiral.audience`) is the agent's identity to Admiral. The agent holds no long-lived credential.
-- RBAC for what the agent may deploy, and a binding to `system:service-account-issuer-discovery` so it can read the cluster's token signing keys
+- RBAC for what the agent may deploy, a Role to hold its Lease in the release namespace, and a binding to `system:service-account-issuer-discovery` so it can read the cluster's token signing keys
 - optionally, an egress-only NetworkPolicy
 
-In Admiral, create a workload identity provider for the cluster, then create each agent with its subject, `system:serviceaccount:<namespace>:<service account>`, and note the agent's `agt-` id. Several agents in one cluster share the provider.
+In Admiral, run `admiral agent create` for each agent. It prints the Admiral service account the agent signs in as, an `sa-` id, and a single-use enrollment key (see [Enrollment](#enrollment)). The agent connects to `api.admiral.io:443`; set `admiral.server` for another Admiral.
 
 ```bash
 helm repo add admiral https://charts.admiral.io
@@ -33,8 +33,7 @@ The default. The agent may deploy to every namespace through one ClusterRole.
 ```bash
 helm install admiral-k8s-agent admiral/admiral-k8s-agent \
   --namespace admiral-system --create-namespace \
-  --set admiral.server=admiral.example.com:443 \
-  --set admiral.agentId=<agt- id> \
+  --set admiral.serviceAccountId=<sa- id> \
   --set serviceAccount.name=admiral-k8s-agent
 ```
 
@@ -45,8 +44,7 @@ To keep workloads apart, run one release per agent, each in its own namespace an
 ```bash
 helm install agent-payments admiral/admiral-k8s-agent \
   --namespace admiral-payments --create-namespace \
-  --set admiral.server=admiral.example.com:443 \
-  --set admiral.agentId=<agt- id> \
+  --set admiral.serviceAccountId=<sa- id> \
   --set serviceAccount.name=admiral-k8s-agent \
   --set 'rbac.namespaces={payments-prod}'
 ```
@@ -55,7 +53,7 @@ Every cluster-scoped object the chart creates is named after both the release an
 
 ## Enrollment
 
-If Admiral cannot fetch your cluster's service-account signing keys (a private cluster, or kind), the agent can send them once. Create a single-use enrollment key in Admiral and store it in the release namespace before you install:
+Enrollment sends the cluster's service-account signing keys to Admiral once, so Admiral learns which issuer signs the agent's token and which subject to expect. Store the enrollment key that `admiral agent create` printed in the release namespace before you install:
 
 ```bash
 kubectl --namespace admiral-system create secret generic admiral-k8s-agent-enrollment \
@@ -97,7 +95,7 @@ kubectl label namespace admiral-system \
 
 ## Upgrading
 
-An upgrade starts the new pod before stopping the old one, and stops the old one only once the new one has reached Admiral. A new pod that cannot reach Admiral leaves the old agent running. Running jobs get `shutdownDrain` to finish.
+An upgrade starts the new pod before stopping the old one, and stops the old one only once the new one can read the Lease and is connected to Admiral. A new pod that cannot reach Admiral leaves the old agent running. Running jobs get `shutdownDrain` to finish, then the old pod releases the Lease and the new one takes over.
 
 {{ template "chart.requirementsSection" . }}
 
