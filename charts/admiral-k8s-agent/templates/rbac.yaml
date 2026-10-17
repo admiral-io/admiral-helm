@@ -79,8 +79,9 @@ subjects:
 {{- if eq (include "admiral-k8s-agent.leaderElect" .) "true" }}
 ---
 # Lets the agent's pods elect a leader through the Lease
-# admiral-k8s-agent-<agent id> in the release namespace. Kubernetes cannot
-# limit create to one name, so the rule covers every Lease in this namespace.
+# admiral-k8s-agent-<service account id> in the release namespace.
+# Kubernetes cannot limit create to one name, so the rule covers every Lease
+# in this namespace.
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:

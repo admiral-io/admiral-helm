@@ -9,9 +9,9 @@ Produces clear error messages when required settings are missing.
   {{- fail "\n\nADMIRAL K8S-AGENT CONFIGURATION ERROR:\n  admiral.server is required.\n  Set it to Admiral's address (host:port):\n    --set admiral.server=admiral.example.com:443\n" }}
 {{- end }}
 
-{{/* --- Agent ID --- */}}
-{{- if not (regexMatch "^agt-[0-9a-z]+$" (toString .Values.admiral.agentId)) }}
-  {{- fail "\n\nADMIRAL K8S-AGENT CONFIGURATION ERROR:\n  admiral.agentId is required, as an agt- id.\n  Create the agent in Admiral and set its ID:\n    --set admiral.agentId=<agt- id>\n" }}
+{{/* --- Service account --- */}}
+{{- if not (regexMatch "^sa-[0-9a-z]+$" (toString .Values.admiral.serviceAccountId)) }}
+  {{- fail "\n\nADMIRAL K8S-AGENT CONFIGURATION ERROR:\n  admiral.serviceAccountId is required, as an sa- id.\n  admiral agent create prints it:\n    --set admiral.serviceAccountId=<sa- id>\n" }}
 {{- end }}
 
 {{/* --- TLS --- */}}

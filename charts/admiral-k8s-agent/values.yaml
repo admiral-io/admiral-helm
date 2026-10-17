@@ -26,12 +26,11 @@ fullnameOverride: ""
 
 # -- How the agent reaches Admiral and which agent it is.
 admiral:
-  # -- Admiral's address (`host:port`). Sets `ADMIRAL_SERVER`. Required.
-  server: ""
-  # -- The agent in Admiral this release runs as, an `agt-` id. Admiral checks
-  # the service-account token against that agent's provider and subject. Sets
-  # `ADMIRAL_AGENT_ID`. Required.
-  agentId: ""
+  # -- Admiral's address (`host:port`). Sets `ADMIRAL_SERVER`.
+  server: api.admiral.io:443
+  # -- The Admiral service account the agent signs in as, an `sa-` id, which
+  # `admiral agent create` prints. Sets `ADMIRAL_SERVICE_ACCOUNT_ID`. Required.
+  serviceAccountId: ""
   # -- Audience of the projected service-account token the agent presents to
   # Admiral. It must match the audience your Admiral installation expects.
   audience: admiral.io
@@ -48,9 +47,9 @@ admiral:
     key: ca.crt
 
 # -- Enrollment sends the cluster's service-account signing keys to Admiral
-# once, for a cluster whose keys Admiral cannot fetch (a private cluster, or
-# kind). Create a single-use enrollment key in Admiral, store it in a Secret in
-# the release namespace, and name that Secret here. The key is spent on first
+# once, so Admiral learns which issuer signs the agent's token and which
+# subject to expect. `admiral agent create` prints a single-use enrollment key.
+# Store it in a Secret in the release namespace, and name that Secret here. The key is spent on first
 # use. You can delete the Secret afterwards, and the agent still starts.
 enrollment:
   # -- Name of a Secret holding the enrollment key. Empty means the agent does
@@ -118,7 +117,7 @@ serviceAccount:
 replicas: 1
 
 # -- Elect one leader among the agent's pods through the Lease
-# `admiral-k8s-agent-<agent id>` in the release namespace. The others stand
+# `admiral-k8s-agent-<service account id>` in the release namespace. The others stand
 # by and take over when it stops. With `rbac.create`, the chart grants get,
 # create and update on Leases in the release namespace. Set false only for
 # one replica that should not hold a Lease. Sets `ADMIRAL_LEADER_ELECT`.

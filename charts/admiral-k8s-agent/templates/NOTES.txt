@@ -7,7 +7,7 @@
   Agent:       {{ $fullName }}
   Namespace:   {{ .Release.Namespace }}
   Admiral:     {{ .Values.admiral.server }}
-  Agent ID:    {{ .Values.admiral.agentId }}
+  Signs in as: {{ .Values.admiral.serviceAccountId }}
   {{- if .Values.admiral.insecure }}
   TLS:         DISABLED (admiral.insecure)
   {{- end }}
@@ -38,7 +38,7 @@
 
   The agent enrolls with the key in Secret "{{ .Values.enrollment.existingSecret }}".
   The logs show "Enrollment did not complete" if Admiral refused it. The key
-  is single-use; once the cluster is enrolled you can delete the Secret.
+  is single-use; once the agent is enrolled you can delete the Secret.
 {{- end }}
 {{- if not .Values.rbac.create }}
 
