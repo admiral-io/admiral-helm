@@ -1,6 +1,6 @@
 apiVersion: v2
 name: admiral-k8s-agent
-description: Connects a Kubernetes cluster to Admiral over an outbound-only connection, and plans and applies changes with server-side apply.
+description: Runs an Admiral agent in Kubernetes over an outbound-only connection, and plans and applies changes with server-side apply.
 home: https://admiral.io
 icon: https://raw.githubusercontent.com/admiral-io/admiral-helm/master/assets/admiral-icon.svg
 sources:
@@ -13,8 +13,8 @@ keywords:
   - platform-engineering
   - continuous-delivery
 type: application
-version: 0.7.1
-appVersion: v0.1.0
+version: 0.8.0
+appVersion: v0.2.0
 maintainers:
   - name: Admiral Contributors
     email: support@admiral.io
@@ -30,4 +30,6 @@ annotations:
       url: https://github.com/admiral-io/admiral-community
   artifacthub.io/changes: |
     - kind: changed
-      description: The default rules grant watch on Jobs and Pods, so an apply sees a hook finish even when its TTL deletes it at once
+      description: admiral.serviceAccountId (ADMIRAL_SERVICE_ACCOUNT_ID) replaces admiral.agentId
+    - kind: changed
+      description: admiral.server defaults to api.admiral.io:443
