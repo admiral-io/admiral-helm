@@ -100,10 +100,11 @@ RBAC rules for the ClusterRole, or for each Role when rbac.namespaces is set.
   resources: ["daemonsets", "deployments", "statefulsets"]
   verbs: ["get", "patch", "create", "delete"]
 # Watch lets an apply see a hook Job or Pod finish even when it is deleted
-# at once, as a Job with ttlSecondsAfterFinished: 0 is.
+# at once, as a Job with ttlSecondsAfterFinished: 0 is. List lets a wait say
+# why a workload's pods are not ready.
 - apiGroups: [""]
   resources: ["pods"]
-  verbs: ["get", "patch", "create", "delete", "watch"]
+  verbs: ["get", "list", "patch", "create", "delete", "watch"]
 - apiGroups: ["batch"]
   resources: ["cronjobs"]
   verbs: ["get", "patch", "create", "delete"]
