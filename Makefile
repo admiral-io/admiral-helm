@@ -30,3 +30,5 @@ schema:
 template:
 	helm template admiral-k8s-agent charts/admiral-k8s-agent \
 		--set admiral.server=admiral.example.com:443 --set admiral.serviceAccountId=sa-000000000000
+	helm template admiral-infra-agent charts/admiral-infra-agent \
+		--set admiral.server=admiral.example.com:443 --set admiral.serviceAccountId=sa-000000000000

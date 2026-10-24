@@ -1,0 +1,49 @@
+{{- $fullName := include "admiral-infra-agent.fullname" . -}}
+
+==========================================================================
+  Admiral Infra Agent
+==========================================================================
+
+  Agent:       {{ $fullName }}
+  Namespace:   {{ .Release.Namespace }}
+  Admiral:     {{ .Values.admiral.server }}
+  Signs in as: {{ .Values.admiral.serviceAccountId }}
+  {{- if .Values.admiral.insecure }}
+  TLS:         DISABLED (admiral.insecure)
+  {{- end }}
+  Data:        {{ if .Values.persistence.enabled }}claim {{ include "admiral-infra-agent.claimName" . }}{{ else }}emptyDir, lost when the pod goes{{ end }}
+
+  Wait for the agent to start:
+    kubectl rollout status --namespace {{ .Release.Namespace }} deploy/{{ $fullName }}
+
+  Read its logs:
+    kubectl logs --namespace {{ .Release.Namespace }} deploy/{{ $fullName }} -f
+
+  The agent logs "Starting admiral-infra-agent" at startup, and logs each
+  credential every job can reach, by where it is, never its value. The pod
+  is NotReady until a status report reaches Admiral, and again after three
+  failures in a row, which shows in:
+    kubectl get pods --namespace {{ .Release.Namespace }} -l app.kubernetes.io/instance={{ .Release.Name }}
+
+  A stopping pod lets a running apply finish for up to {{ .Values.shutdownDrain }}.
+{{- if .Values.enrollment.existingSecret }}
+
+--------------------------------------------------------------------------
+  Enrollment
+--------------------------------------------------------------------------
+
+  The agent enrolls with the key in Secret "{{ .Values.enrollment.existingSecret }}".
+  The logs show "Enrollment did not complete" if it failed. The key is
+  single-use; once the agent is enrolled you can delete the Secret.
+{{- end }}
+{{- if not .Values.rbac.create }}
+
+--------------------------------------------------------------------------
+  RBAC
+--------------------------------------------------------------------------
+
+  rbac.create=false: the chart granted the service account
+  "{{ include "admiral-infra-agent.serviceAccountName" . }}" nothing. The agent needs get on the
+  kube-system namespace to start, and get, create and update on Leases in
+  {{ .Release.Namespace }} to elect a leader.
+{{- end }}
