@@ -10,9 +10,7 @@ spec:
   # through a Lease, and only the leader claims jobs. An upgrade starts a new
   # pod first, which stands by and is ready once it can read the Lease and is
   # connected to Admiral. The old pod then stops, releases the Lease, and the
-  # new one takes over. Agent v0.1.0 has no leader election, so there both
-  # pods claim work until the old one stops; each job attempt runs under a
-  # lease in one pod only.
+  # new one takes over.
   replicas: {{ include "admiral-k8s-agent.replicas" . }}
   strategy:
     type: RollingUpdate
