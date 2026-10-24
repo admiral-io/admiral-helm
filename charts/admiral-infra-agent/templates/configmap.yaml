@@ -1,0 +1,11 @@
+{{- if .Values.config }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "admiral-infra-agent.fullname" . }}
+  labels:
+    {{- include "admiral-infra-agent.labels" . | nindent 4 }}
+data:
+  config.json: |
+    {{- toPrettyJson .Values.config | nindent 4 }}
+{{- end }}

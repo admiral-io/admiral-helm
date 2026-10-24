@@ -1,0 +1,101 @@
+{{ template "chart.header" . }}
+
+{{ template "chart.badgesSection" . }}
+
+{{ template "chart.description" . }}
+
+[Admiral](https://admiral.io/?utm_source=artifacthub&utm_medium=referral&utm_campaign=admiral-infra-agent) is a control plane for coordinating infrastructure and application delivery across environments. This chart installs the self-hosted agent that runs its Terraform and OpenTofu components where your infrastructure credentials are.
+
+## What it installs
+
+The Admiral Infra Agent takes work from Admiral, plans a component and uploads the saved plan and a redacted diff, and applies exactly the plan that was reviewed. It downloads OpenTofu on first use and checks its signature, and runs the Terraform binaries you list. It opens outbound connections only, and deploys nothing into the cluster it runs in.
+
+The chart installs one agent:
+
+- a Deployment, one replica by default. Its pods elect a leader through a Lease, and only the leader claims jobs, so more replicas add failover, not throughput.
+- a ServiceAccount, whose projected token (audience `admiral.audience`) is the agent's identity to Admiral. The agent holds no long-lived credential.
+- a ClusterRole that lets the agent read the `kube-system` namespace and nothing else, a Role to hold its Lease in the release namespace, and a binding to `system:service-account-issuer-discovery` so it can read the cluster's token signing keys
+- a ConfigMap for the agent's configuration file, when `config` is set
+- optionally, a PersistentVolumeClaim for its data, and an egress-only NetworkPolicy
+
+In Admiral, run `admiral agent create` for each agent. It prints the Admiral service account the agent signs in as, an `sa-` id, and a single-use enrollment key (see [Enrollment](#enrollment)). The agent connects to `api.admiral.io:443`; set `admiral.server` for another Admiral.
+
+```bash
+helm repo add admiral https://charts.admiral.io
+helm repo update
+```
+
+The chart is also published as `oci://ghcr.io/admiral-io/admiral-helm/admiral-infra-agent`.
+
+## Install
+
+```bash
+helm install admiral-infra-agent admiral/admiral-infra-agent \
+  --namespace admiral-system --create-namespace \
+  --set admiral.serviceAccountId=<sa- id> \
+  --set serviceAccount.name=admiral-infra-agent
+```
+
+## Enrollment
+
+Enrollment sends the cluster's service-account signing keys to Admiral once, so Admiral learns which issuer signs the agent's token and which subject to expect. Store the enrollment key that `admiral agent create` printed in the release namespace before you install:
+
+```bash
+kubectl --namespace admiral-system create secret generic admiral-infra-agent-enrollment \
+  --from-literal=key=<enrollment key>
+```
+
+Then add `--set enrollment.existingSecret=admiral-infra-agent-enrollment`. The key is spent on first use. You can delete the Secret afterwards, and the agent still starts.
+
+## Cloud credentials
+
+The agent's jobs use whatever identity the pod has; Admiral never holds it. Every job inherits the agent's environment, except variables starting `ADMIRAL_`, `TF_` or `TOFU_`, and gets its own home and temporary directory. Give jobs an identity in whichever way your platform supports:
+
+- workload identity: annotate the service account with `serviceAccount.annotations`, and allow the metadata server in `networkPolicy.extraEgress` if you enable the NetworkPolicy
+- static keys: put them in a Secret and add it with `extraEnvFrom`, or with `extraEnv` and `secretKeyRef`
+- credential files: mount them with `extraVolumes` and `extraVolumeMounts`, and point the provider's variable at them in `extraEnv`
+
+At startup, the agent logs each credential every job can reach, by where it is and never by its value, and reports the same list to Admiral.
+
+## Configuration file
+
+`config` becomes the agent's JSON configuration file. Every key is optional:
+
+```yaml
+config:
+  allowed_providers:
+    - registry.opentofu.org/hashicorp/*
+  terraform:
+    - /opt/tools/terraform
+  hooks:
+    - name: conftest
+      phase: post_plan
+      command: ["/opt/tools/conftest", "test", "--output", "json"]
+      timeout: 2m
+```
+
+The image holds only the agent. Put Terraform binaries and hook tools on a volume with `extraVolumes` and `extraVolumeMounts`, filled by one of `initContainers` or an image volume, and list them by their path there. The chart checks the keys and each hook's phase, because the agent refuses an unknown key at startup.
+
+## Data and shutdown
+
+The agent keeps job directories, downloaded OpenTofu releases, the provider cache, and any state an apply could not save to its backend under `/var/lib/admiral`. By default that is an emptyDir, so a new pod downloads OpenTofu and providers again, and saved state the backend refused is lost with the pod. Set `persistence.enabled` to keep it on a PersistentVolumeClaim. The Deployment then runs one replica and replaces its pod rather than rolling.
+
+When a pod is asked to stop, plans stop at once and a running apply gets `shutdownDrain` (24 hours by default) to finish. An apply still running then stops before its next component and writes state. The chart sets the pod's termination grace period to `shutdownDrain` plus 5 minutes from the same value, so the two cannot drift. A rollout or `helm upgrade --wait` can therefore take as long as the longest apply.
+
+## Metrics
+
+The agent serves `/healthz`, `/readyz` and Prometheus metrics at `/metrics` on port 8081, the container port named `http`. Metric names start with `admiral_infra_agent_`.
+
+## Pod Security
+
+The pod meets the `restricted` Pod Security Standard, with a read-only root filesystem. Enforce it on the release namespace:
+
+```bash
+kubectl label namespace admiral-system \
+  pod-security.kubernetes.io/enforce=restricted \
+  pod-security.kubernetes.io/warn=restricted
+```
+
+{{ template "chart.requirementsSection" . }}
+
+{{ template "chart.valuesSection" . }}

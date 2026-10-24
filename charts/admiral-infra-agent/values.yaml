@@ -1,0 +1,275 @@
+# Default values for admiral-infra-agent.
+# This is a YAML-formatted file.
+#
+# The chart runs one agent. To run several agents in one cluster, install the
+# chart once per agent, each in its own namespace.
+
+# -- Container image configuration
+image:
+  # -- Image repository
+  repository: ghcr.io/admiral-io/admiral-infra-agent
+  # -- Overrides the image tag whose default is the chart appVersion
+  tag: ""
+  # -- Image pull policy
+  pullPolicy: IfNotPresent
+
+# -- Image pull secrets for private registries
+imagePullSecrets: []
+# -- Override the chart name
+nameOverride: ""
+# -- Override the full release name
+fullnameOverride: ""
+
+# =============================================================================
+# Admiral
+# =============================================================================
+
+# -- How the agent reaches Admiral and which agent it is.
+admiral:
+  # -- Admiral's address (`host:port`). Sets `ADMIRAL_SERVER`.
+  server: api.admiral.io:443
+  # -- The Admiral service account the agent signs in as, an `sa-` id, which
+  # `admiral agent create` prints. Sets `ADMIRAL_SERVICE_ACCOUNT_ID`. Required.
+  serviceAccountId: ""
+  # -- Audience of the projected service-account token the agent presents to
+  # Admiral. It must match the audience your Admiral installation expects.
+  audience: admiral.io
+  # -- Connect to Admiral without TLS. For local development only: the agent
+  # connects this way only to a loopback address, and will not enroll. Sets
+  # `ADMIRAL_INSECURE`.
+  insecure: false
+  # -- Trust a private certificate authority for Admiral, beside the
+  # system's. Names a ConfigMap in the release namespace holding PEM
+  # certificates. Sets `ADMIRAL_CA_FILE`.
+  ca:
+    # -- Name of the ConfigMap. Empty trusts the system's authorities only.
+    configMap: ""
+    # -- Key within the ConfigMap that holds the certificates.
+    key: ca.crt
+
+# -- Enrollment sends the cluster's service-account signing keys to Admiral
+# once, so Admiral learns which issuer signs the agent's token and which
+# subject to expect. `admiral agent create` prints a single-use enrollment key.
+# Store it in a Secret in the release namespace, and name that Secret here. The key is spent on first
+# use. You can delete the Secret afterwards, and the agent still starts.
+enrollment:
+  # -- Name of a Secret holding the enrollment key. Empty means the agent does
+  # not enroll.
+  existingSecret: ""
+  # -- Key within `existingSecret` that holds the enrollment key. The key is
+  # mounted as a file, so it does not show in the pod's environment. Sets
+  # `ADMIRAL_ENROLLMENT_KEY_FILE`.
+  existingSecretKey: key
+
+# =============================================================================
+# RBAC
+# =============================================================================
+
+# -- What the agent may do in the cluster. It deploys nothing there, so it
+# needs no rights on workloads. It reads the `kube-system` namespace's UID at
+# startup, reads the cluster's token signing keys for enrollment, and holds a
+# Lease in the release namespace to elect a leader.
+rbac:
+  # -- Create the RBAC objects. Set false to bind the service account yourself.
+  create: true
+
+# -- Service account the agent runs as. Its projected token is the agent's
+# identity to Admiral. Annotate it to give jobs a cloud identity through your
+# platform's workload identity.
+serviceAccount:
+  # -- Create a service account
+  create: true
+  # -- The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template.
+  name: ""
+  # -- Annotations to add to the service account
+  annotations: {}
+
+# =============================================================================
+# Agent
+# =============================================================================
+
+# -- Pods for this agent. Only the elected leader claims jobs, so more than
+# one adds failover, not throughput. Needs `leaderElect`, and cannot be
+# combined with `persistence.enabled`.
+replicas: 1
+
+# -- Elect one leader among the agent's pods through the Lease
+# `admiral-infra-agent-<service account id>` in the release namespace. The
+# others stand by and take over when it stops. With `rbac.create`, the chart
+# grants get, create and update on Leases in the release namespace. Set false
+# only for one replica that should not hold a Lease. Sets
+# `ADMIRAL_LEADER_ELECT`.
+leaderElect: true
+
+# -- How many plans the agent runs at once, from 1 to 64. Sets
+# `ADMIRAL_PLAN_CONCURRENCY`.
+planConcurrency: 2
+
+# -- How many applies the agent runs at once, from 1 to 64. Sets
+# `ADMIRAL_APPLY_CONCURRENCY`.
+applyConcurrency: 1
+
+# -- How long a running apply may finish after the pod is asked to stop.
+# Plans stop at once. Sets `ADMIRAL_SHUTDOWN_DRAIN`. Write it in hours,
+# minutes and seconds (`24h`, `1h30m`). The default matches an apply's 24h
+# limit. An apply still running then stops before its next component and
+# writes state, so the pod's termination grace period is set 5 minutes above
+# this.
+shutdownDrain: 24h
+
+# -- The most a job's artifact may expand to, in MiB, from 1 to 512. A larger
+# artifact fails its job. Sets `ADMIRAL_MAX_ARTIFACT_MIB`.
+maxArtifactMiB: 64
+
+# -- Log format, `json` or `text`. Sets `ADMIRAL_LOG_FORMAT`.
+logFormat: json
+
+# -- Log at debug level. Adds `--verbose`.
+verbose: false
+
+# -- The agent's configuration file. The chart writes it to a ConfigMap and
+# sets `ADMIRAL_CONFIG_FILE`; when empty, the agent runs without one. Keys:
+# `allowed_providers` limits the providers `init` may install (empty allows
+# any), `terraform` lists Terraform binaries the agent may run (the agent
+# downloads OpenTofu itself), and `hooks` run in every job at `pre_init`,
+# `post_plan` or `post_apply`. The image holds only the agent, so mount
+# Terraform and hook tools with `extraVolumes` or `initContainers`.
+config: {}
+  # allowed_providers:
+  #   - registry.opentofu.org/hashicorp/*
+  # terraform:
+  #   - /opt/tools/terraform
+  # hooks:
+  #   - name: conftest
+  #     phase: post_plan
+  #     command: ["/opt/tools/conftest", "test", "--output", "json"]
+  #     timeout: 2m
+
+# -- Extra arguments appended to the agent's `run` command
+extraArgs: []
+
+# -- Extra environment variables for the agent container. Jobs inherit them,
+# except those starting `ADMIRAL_`, `TF_` or `TOFU_`, so this is one way to
+# hand jobs a credential. The agent honors `HTTPS_PROXY`.
+extraEnv: []
+  # - name: HTTPS_PROXY
+  #   value: http://proxy.example.com:3128
+
+# -- Extra sources of environment variables, such as a Secret of API keys.
+# Jobs inherit them as they do `extraEnv`.
+extraEnvFrom: []
+  # - secretRef:
+  #     name: provider-credentials
+
+# -- Extra volumes for the pod, such as tools for `config.terraform` and
+# `config.hooks`, or a credentials file
+extraVolumes: []
+
+# -- Extra volume mounts for the agent container
+extraVolumeMounts: []
+
+# -- Init containers, for example to copy a Terraform binary into one of
+# `extraVolumes`
+initContainers: []
+
+# =============================================================================
+# Data
+# =============================================================================
+
+# -- Where the agent keeps job directories, downloaded OpenTofu releases, the
+# provider cache, and state an apply could not save to its backend (under
+# `kept/`). Mounted at `/var/lib/admiral`. An emptyDir by default, which the
+# pod loses when it goes, kept state included.
+persistence:
+  # -- Keep the data on a PersistentVolumeClaim instead of an emptyDir. The
+  # Deployment then replaces its pod rather than rolling, and runs one replica.
+  enabled: false
+  # -- Use an existing claim instead of creating one
+  existingClaim: ""
+  # -- Storage class of the created claim. Empty uses the cluster's default.
+  storageClassName: ""
+  # -- Access modes of the created claim
+  accessModes:
+    - ReadWriteOnce
+  # -- Size of the created claim
+  size: 20Gi
+  # -- Size limit of the emptyDir when `enabled` is false. Empty sets none.
+  sizeLimit: ""
+
+# =============================================================================
+# Pod
+# =============================================================================
+
+# -- Annotations to add to the pod
+podAnnotations: {}
+
+# -- Labels to add to the pod
+podLabels: {}
+
+# -- Pod security context. Meets the Kubernetes restricted Pod Security
+# Standard. The image runs as uid and gid 65532.
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 65532
+  runAsGroup: 65532
+  fsGroup: 65532
+  seccompProfile:
+    type: RuntimeDefault
+
+# -- Container security context. The root filesystem is read-only: the agent
+# writes only under its data directory and `/tmp`, both volumes.
+securityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  runAsNonRoot: true
+  capabilities:
+    drop:
+      - ALL
+
+# -- Resource requests and limits. OpenTofu, Terraform and their providers run
+# inside the agent's container, so size the limits for the largest
+# components times `planConcurrency` plus `applyConcurrency`.
+resources:
+  requests:
+    cpu: 100m
+    memory: 256Mi
+  limits:
+    cpu: "2"
+    memory: 2Gi
+
+# -- Node selector for pod assignment. The image is built for Linux only.
+nodeSelector:
+  kubernetes.io/os: linux
+
+# -- Tolerations for pod assignment
+tolerations: []
+
+# -- Affinity rules for pod assignment
+affinity: {}
+
+# -- Priority class for the pod
+priorityClassName: ""
+
+# =============================================================================
+# Network Policy
+# =============================================================================
+
+# -- NetworkPolicy that limits the agent's outbound traffic to DNS (port 53),
+# HTTPS and the Kubernetes API server (ports 443 and 6443), and Admiral (the
+# port in `admiral.server`, 443 when none is given). Jobs reach OpenTofu's
+# releases, provider registries, state backends and cloud APIs over 443, so
+# the rules match by port only. Inbound traffic is left alone: the agent
+# accepts none except its health checks and metrics scrapes.
+networkPolicy:
+  # -- Create the NetworkPolicy
+  enabled: false
+  # -- Additional egress rules, for example to reach an HTTPS proxy or a
+  # cloud metadata server
+  extraEgress: []
+    # - to:
+    #     - ipBlock:
+    #         cidr: 169.254.169.254/32
+    #   ports:
+    #     - port: 80
+    #       protocol: TCP

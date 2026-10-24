@@ -15,6 +15,7 @@ helm repo update
 | Chart | Status | Description |
 | --- | --- | --- |
 | [admiral-k8s-agent](charts/admiral-k8s-agent) | Alpha | Connects a Kubernetes cluster to Admiral |
+| [admiral-infra-agent](charts/admiral-infra-agent) | Alpha | Runs Terraform and OpenTofu components for Admiral |
 
 Each chart is versioned and released on its own, and each release carries its
 changelog.
