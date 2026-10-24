@@ -5,6 +5,48 @@ entries:
       artifacthub.io/category: integration-delivery
       artifacthub.io/changes: |
         - kind: changed
+          description: appVersion v0.4.0, which speaks a new agent protocol and needs an Admiral that speaks it too
+        - kind: changed
+          description: Before each plan the agent checks its own permissions with SelfSubjectAccessReview, which Kubernetes grants every authenticated identity, so the chart's RBAC is unchanged
+        - kind: changed
+          description: A plan lists an object Admiral did not create as a takeover, and the apply takes it over once approved. The admiral.io/adopt annotation no longer has an effect
+      artifacthub.io/displayName: Admiral Kubernetes Agent
+      artifacthub.io/license: Apache-2.0
+      artifacthub.io/links: |
+        - name: Documentation
+          url: https://admiral.io/docs?utm_source=artifacthub&utm_medium=referral&utm_campaign=admiral-k8s-agent
+        - name: Support
+          url: https://github.com/admiral-io/admiral-community
+    apiVersion: v2
+    appVersion: v0.4.0
+    created: "2026-10-24T20:47:06.651413221Z"
+    description: Runs an Admiral agent in Kubernetes over an outbound-only connection,
+      and plans and applies changes with server-side apply.
+    digest: a7d6f315c566536a209e95f459b726422f478deea872e4f060d8024d74b83f90
+    home: https://admiral.io
+    icon: https://raw.githubusercontent.com/admiral-io/admiral-helm/master/assets/admiral-icon.svg
+    keywords:
+    - admiral
+    - kubernetes
+    - agent
+    - deployment
+    - platform-engineering
+    - continuous-delivery
+    maintainers:
+    - email: support@admiral.io
+      name: Admiral Contributors
+      url: https://github.com/admiral-io/admiral-helm
+    name: admiral-k8s-agent
+    sources:
+    - https://github.com/admiral-io/admiral-helm
+    type: application
+    urls:
+    - https://github.com/admiral-io/admiral-helm/releases/download/admiral-k8s-agent-0.10.0/admiral-k8s-agent-0.10.0.tgz
+    version: 0.10.0
+  - annotations:
+      artifacthub.io/category: integration-delivery
+      artifacthub.io/changes: |
+        - kind: changed
           description: The default rules grant list on Pods, so a wait says why a workload's pods are not ready
       artifacthub.io/displayName: Admiral Kubernetes Agent
       artifacthub.io/license: Apache-2.0
@@ -312,4 +354,4 @@ entries:
     urls:
     - https://github.com/admiral-io/admiral-helm/releases/download/admiral-k8s-agent-0.5.0/admiral-k8s-agent-0.5.0.tgz
     version: 0.5.0
-generated: "2026-10-18T18:12:46.486972884Z"
+generated: "2026-10-24T20:47:06.651447702Z"
