@@ -13,8 +13,8 @@ keywords:
   - platform-engineering
   - continuous-delivery
 type: application
-version: 0.10.0
-appVersion: v0.4.0
+version: 0.10.1
+appVersion: v0.4.2
 maintainers:
   - name: Admiral Contributors
     email: support@admiral.io
@@ -29,9 +29,5 @@ annotations:
     - name: Support
       url: https://github.com/admiral-io/admiral-community
   artifacthub.io/changes: |
-    - kind: changed
-      description: appVersion v0.4.0, which speaks a new agent protocol and needs an Admiral that speaks it too
-    - kind: changed
-      description: Before each plan the agent checks its own permissions with SelfSubjectAccessReview, which Kubernetes grants every authenticated identity, so the chart's RBAC is unchanged
-    - kind: changed
-      description: A plan lists an object Admiral did not create as a takeover, and the apply takes it over once approved. The admiral.io/adopt annotation no longer has an effect
+    - kind: fixed
+      description: appVersion v0.4.2. Chart 0.10.0 named v0.4.0, which never published an image
