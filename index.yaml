@@ -43,6 +43,44 @@ entries:
   - annotations:
       artifacthub.io/category: integration-delivery
       artifacthub.io/changes: |
+        - kind: fixed
+          description: appVersion v0.4.2. Chart 0.10.0 named v0.4.0, which never published an image
+      artifacthub.io/displayName: Admiral Kubernetes Agent
+      artifacthub.io/license: Apache-2.0
+      artifacthub.io/links: |
+        - name: Documentation
+          url: https://admiral.io/docs?utm_source=artifacthub&utm_medium=referral&utm_campaign=admiral-k8s-agent
+        - name: Support
+          url: https://github.com/admiral-io/admiral-community
+    apiVersion: v2
+    appVersion: v0.4.2
+    created: "2026-10-25T01:35:32.456970484Z"
+    description: Runs an Admiral agent in Kubernetes over an outbound-only connection,
+      and plans and applies changes with server-side apply.
+    digest: 079ac0ef57b72c0918bcd14cfb134648c59cd325c7001ba212b2db3eb542c0f4
+    home: https://admiral.io
+    icon: https://raw.githubusercontent.com/admiral-io/admiral-helm/master/assets/admiral-icon.svg
+    keywords:
+    - admiral
+    - kubernetes
+    - agent
+    - deployment
+    - platform-engineering
+    - continuous-delivery
+    maintainers:
+    - email: support@admiral.io
+      name: Admiral Contributors
+      url: https://github.com/admiral-io/admiral-helm
+    name: admiral-k8s-agent
+    sources:
+    - https://github.com/admiral-io/admiral-helm
+    type: application
+    urls:
+    - https://github.com/admiral-io/admiral-helm/releases/download/admiral-k8s-agent-0.10.1/admiral-k8s-agent-0.10.1.tgz
+    version: 0.10.1
+  - annotations:
+      artifacthub.io/category: integration-delivery
+      artifacthub.io/changes: |
         - kind: changed
           description: appVersion v0.4.0, which speaks a new agent protocol and needs an Admiral that speaks it too
         - kind: changed
@@ -393,4 +431,4 @@ entries:
     urls:
     - https://github.com/admiral-io/admiral-helm/releases/download/admiral-k8s-agent-0.5.0/admiral-k8s-agent-0.5.0.tgz
     version: 0.5.0
-generated: "2026-10-24T20:47:38.459218359Z"
+generated: "2026-10-25T01:35:32.457025279Z"
