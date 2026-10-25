@@ -12,7 +12,7 @@ all: docs schema
 
 .PHONY: help # Print this help message.
 help:
-	@grep -E '^\.PHONY: [a-zA-Z_-]+ .*?# .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = "(: |#)"}; {printf "%-30s %s\n", $$2, $$3}'
+	@grep -E '^\.PHONY: [a-zA-Z0-9_-]+ .*?# .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = "(: |#)"}; {printf "%-30s %s\n", $$2, $$3}'
 
 .PHONY: lint # Run chart linting.
 lint:
@@ -32,3 +32,11 @@ template:
 		--set admiral.server=admiral.example.com:443 --set admiral.serviceAccountId=sa-000000000000
 	helm template admiral-infra-agent charts/admiral-infra-agent \
 		--set admiral.server=admiral.example.com:443 --set admiral.serviceAccountId=sa-000000000000
+
+.PHONY: release-k8s-agent # Prepare an admiral-k8s-agent chart release on a branch (BUMP=patch|minor|major overrides).
+release-k8s-agent:
+	./scripts/release.sh admiral-k8s-agent
+
+.PHONY: release-infra-agent # Prepare an admiral-infra-agent chart release on a branch (BUMP=patch|minor|major overrides).
+release-infra-agent:
+	./scripts/release.sh admiral-infra-agent
