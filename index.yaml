@@ -44,6 +44,52 @@ entries:
       artifacthub.io/category: integration-delivery
       artifacthub.io/changes: |
         - kind: fixed
+          description: appVersion v0.4.3. An apply that creates a Job, or an object a webhook or the API server stamps with made-up values on each dry run, is no longer refused for a plan that changed
+        - kind: fixed
+          description: An update's and a takeover's plan count only the fields the apply changes, so a webhook's fresh stamp no longer refuses the apply
+        - kind: changed
+          description: A custom resource is not healthy until its controller writes a status, when its CRD declares one, or while its Ready condition describes an earlier generation. admiral.io/health-check disabled opts any object out of the wait. The chart's RBAC already grants get on CRDs
+        - kind: changed
+          description: Pruning leaves in place an object held by a finalizer that is not Kubernetes' own, unless it is annotated admiral.io/prune "true"
+        - kind: added
+          description: The agent takes over the fields of Argo CD, Flux, Pulumi and Terraform, and --take-over-field-managers names more
+      artifacthub.io/displayName: Admiral Kubernetes Agent
+      artifacthub.io/license: Apache-2.0
+      artifacthub.io/links: |
+        - name: Documentation
+          url: https://admiral.io/docs?utm_source=artifacthub&utm_medium=referral&utm_campaign=admiral-k8s-agent
+        - name: Support
+          url: https://github.com/admiral-io/admiral-community
+    apiVersion: v2
+    appVersion: v0.4.3
+    created: "2026-10-27T03:38:56.110155652Z"
+    description: Runs an Admiral agent in Kubernetes over an outbound-only connection,
+      and plans and applies changes with server-side apply.
+    digest: 99a1c8b092054817f9086577d963e8dbc9af454bc5bb2e895055c6b9cc75dd71
+    home: https://admiral.io
+    icon: https://raw.githubusercontent.com/admiral-io/admiral-helm/master/assets/admiral-icon.svg
+    keywords:
+    - admiral
+    - kubernetes
+    - agent
+    - deployment
+    - platform-engineering
+    - continuous-delivery
+    maintainers:
+    - email: support@admiral.io
+      name: Admiral Contributors
+      url: https://github.com/admiral-io/admiral-helm
+    name: admiral-k8s-agent
+    sources:
+    - https://github.com/admiral-io/admiral-helm
+    type: application
+    urls:
+    - https://github.com/admiral-io/admiral-helm/releases/download/admiral-k8s-agent-0.10.2/admiral-k8s-agent-0.10.2.tgz
+    version: 0.10.2
+  - annotations:
+      artifacthub.io/category: integration-delivery
+      artifacthub.io/changes: |
+        - kind: fixed
           description: appVersion v0.4.2. Chart 0.10.0 named v0.4.0, which never published an image
       artifacthub.io/displayName: Admiral Kubernetes Agent
       artifacthub.io/license: Apache-2.0
@@ -431,4 +477,4 @@ entries:
     urls:
     - https://github.com/admiral-io/admiral-helm/releases/download/admiral-k8s-agent-0.5.0/admiral-k8s-agent-0.5.0.tgz
     version: 0.5.0
-generated: "2026-10-25T01:35:32.457025279Z"
+generated: "2026-10-27T03:38:56.110181842Z"
