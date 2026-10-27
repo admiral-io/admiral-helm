@@ -13,8 +13,8 @@ keywords:
   - platform-engineering
   - continuous-delivery
 type: application
-version: 0.10.1
-appVersion: v0.4.2
+version: 0.10.2
+appVersion: v0.4.3
 maintainers:
   - name: Admiral Contributors
     email: support@admiral.io
@@ -30,4 +30,12 @@ annotations:
       url: https://github.com/admiral-io/admiral-community
   artifacthub.io/changes: |
     - kind: fixed
-      description: appVersion v0.4.2. Chart 0.10.0 named v0.4.0, which never published an image
+      description: appVersion v0.4.3. An apply that creates a Job, or an object a webhook or the API server stamps with made-up values on each dry run, is no longer refused for a plan that changed
+    - kind: fixed
+      description: An update's and a takeover's plan count only the fields the apply changes, so a webhook's fresh stamp no longer refuses the apply
+    - kind: changed
+      description: A custom resource is not healthy until its controller writes a status, when its CRD declares one, or while its Ready condition describes an earlier generation. admiral.io/health-check disabled opts any object out of the wait. The chart's RBAC already grants get on CRDs
+    - kind: changed
+      description: Pruning leaves in place an object held by a finalizer that is not Kubernetes' own, unless it is annotated admiral.io/prune "true"
+    - kind: added
+      description: The agent takes over the fields of Argo CD, Flux, Pulumi and Terraform, and --take-over-field-managers names more
