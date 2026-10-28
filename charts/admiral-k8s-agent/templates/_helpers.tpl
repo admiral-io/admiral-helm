@@ -36,8 +36,8 @@ Common labels
 {{- define "admiral-k8s-agent.labels" -}}
 helm.sh/chart: {{ include "admiral-k8s-agent.chart" . }}
 {{ include "admiral-k8s-agent.selectorLabels" . }}
-{{- if .Chart.AppVersion }}
-app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
+{{- with include "admiral-k8s-agent.version" . }}
+app.kubernetes.io/version: {{ . | quote }}
 {{- end }}
 app.kubernetes.io/managed-by: {{ .Release.Service }}
 app.kubernetes.io/component: k8s-agent
@@ -190,4 +190,12 @@ missing value from false.
 
 {{- define "admiral-k8s-agent.caKey" -}}
 {{- (.Values.admiral.ca | default dict).key | default "ca.crt" }}
+{{- end }}
+
+{{/*
+The version that runs: the image tag, defaulting to the chart appVersion.
+The image and the version label both read it, so they agree.
+*/}}
+{{- define "admiral-k8s-agent.version" -}}
+{{- .Values.image.tag | default .Chart.AppVersion -}}
 {{- end }}

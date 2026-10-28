@@ -13,7 +13,7 @@ keywords:
   - infrastructure-as-code
   - platform-engineering
 type: application
-version: 0.1.0
+version: 0.1.1
 appVersion: v0.1.0
 maintainers:
   - name: Admiral Contributors

@@ -36,8 +36,8 @@ Common labels
 {{- define "admiral-infra-agent.labels" -}}
 helm.sh/chart: {{ include "admiral-infra-agent.chart" . }}
 {{ include "admiral-infra-agent.selectorLabels" . }}
-{{- if .Chart.AppVersion }}
-app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
+{{- with include "admiral-infra-agent.version" . }}
+app.kubernetes.io/version: {{ . | quote }}
 {{- end }}
 app.kubernetes.io/managed-by: {{ .Release.Service }}
 app.kubernetes.io/component: infra-agent
@@ -111,4 +111,12 @@ Usage: {{ include "admiral-infra-agent.tplvalues.render" (dict "value" .Values.f
 {{- else }}
 {{- tpl (.value | toYaml) .context }}
 {{- end }}
+{{- end }}
+
+{{/*
+The version that runs: the image tag, defaulting to the chart appVersion.
+The image and the version label both read it, so they agree.
+*/}}
+{{- define "admiral-infra-agent.version" -}}
+{{- .Values.image.tag | default .Chart.AppVersion -}}
 {{- end }}
