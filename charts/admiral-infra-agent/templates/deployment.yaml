@@ -70,7 +70,7 @@ spec:
           securityContext:
             {{- toYaml . | nindent 12 }}
           {{- end }}
-          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          image: "{{ .Values.image.repository }}:{{ include "admiral-infra-agent.version" . }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           args:
             - run
