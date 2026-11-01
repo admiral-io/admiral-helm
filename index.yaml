@@ -15,6 +15,44 @@ entries:
           url: https://github.com/admiral-io/admiral-community
     apiVersion: v2
     appVersion: v0.1.0
+    created: "2026-11-01T00:58:28.783577162Z"
+    description: Runs an Admiral agent in Kubernetes that plans and applies Terraform
+      and OpenTofu components over an outbound-only connection.
+    digest: 15b84e803a70eb7744af9feb3cc765f86769435b1684097efe2b989bd726b6ed
+    home: https://admiral.io
+    icon: https://raw.githubusercontent.com/admiral-io/admiral-helm/master/assets/admiral-icon.svg
+    keywords:
+    - admiral
+    - terraform
+    - opentofu
+    - agent
+    - infrastructure-as-code
+    - platform-engineering
+    maintainers:
+    - email: support@admiral.io
+      name: Admiral Contributors
+      url: https://github.com/admiral-io/admiral-helm
+    name: admiral-infra-agent
+    sources:
+    - https://github.com/admiral-io/admiral-helm
+    type: application
+    urls:
+    - https://github.com/admiral-io/admiral-helm/releases/download/admiral-infra-agent-0.1.2/admiral-infra-agent-0.1.2.tgz
+    version: 0.1.2
+  - annotations:
+      artifacthub.io/category: integration-delivery
+      artifacthub.io/changes: |
+        - kind: added
+          description: The first release, for agent v0.1.0
+      artifacthub.io/displayName: Admiral Infra Agent
+      artifacthub.io/license: Apache-2.0
+      artifacthub.io/links: |
+        - name: Documentation
+          url: https://admiral.io/docs?utm_source=artifacthub&utm_medium=referral&utm_campaign=admiral-infra-agent
+        - name: Support
+          url: https://github.com/admiral-io/admiral-community
+    apiVersion: v2
+    appVersion: v0.1.0
     created: "2026-10-28T01:02:50.405581046Z"
     description: Runs an Admiral agent in Kubernetes that plans and applies Terraform
       and OpenTofu components over an outbound-only connection.
@@ -561,4 +599,4 @@ entries:
     urls:
     - https://github.com/admiral-io/admiral-helm/releases/download/admiral-k8s-agent-0.5.0/admiral-k8s-agent-0.5.0.tgz
     version: 0.5.0
-generated: "2026-10-28T01:02:50.579282759Z"
+generated: "2026-11-01T00:58:28.783589435Z"
