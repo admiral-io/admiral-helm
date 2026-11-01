@@ -13,7 +13,7 @@ keywords:
   - platform-engineering
   - continuous-delivery
 type: application
-version: 0.10.3
+version: 0.10.4
 appVersion: v0.4.3
 maintainers:
   - name: Admiral Contributors
