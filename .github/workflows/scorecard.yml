@@ -14,7 +14,9 @@ permissions: read-all
 jobs:
   analysis:
     name: Scorecard analysis
-    runs-on: blacksmith-4vcpu-ubuntu-2204
+    # Scorecard rejects published results from anything but a GitHub-hosted
+    # runner and its allow-listed actions, so this job stays off Blacksmith.
+    runs-on: ubuntu-22.04
     permissions:
       security-events: write
       id-token: write
@@ -23,7 +25,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: useblacksmith/checkout@v1 # v6.0.2
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
 
