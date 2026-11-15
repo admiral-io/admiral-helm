@@ -88,9 +88,11 @@ rbac:
   # most charts render, each named, with no wildcard, and `watch` on Jobs and
   # Pods, which lets an apply see a hook finish even when its TTL deletes it
   # at once, and `list` on Pods, which lets a wait name why a workload's pods
-  # are not ready. Replaces the default entirely; values are not merged. Rules
-  # without `watch` work, and the agent polls hooks instead; without `list`
-  # on Pods, waits report readiness only.
+  # are not ready, and `get` on `pods/log`, which lets a wait write a crashed
+  # container's last 20 lines to the job log. Replaces the default entirely;
+  # values are not merged. Rules without `watch` work, and the agent polls
+  # hooks instead; without `list` on Pods, waits report readiness only;
+  # without `pods/log`, waits leave container output out.
   rules: []
     # - apiGroups: [""]
     #   resources: ["configmaps", "secrets", "services"]
