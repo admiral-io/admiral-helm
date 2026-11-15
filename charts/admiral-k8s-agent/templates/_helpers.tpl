@@ -111,6 +111,12 @@ RBAC rules for the ClusterRole, or for each Role when rbac.namespaces is set.
 - apiGroups: [""]
   resources: ["events"]
   verbs: ["list"]
+# Get on pods/log lets a wait write the last 20 lines a crashed container
+# wrote before it exited to the job log. Without it the wait leaves them out
+# and says so; remove it to keep workload output in the cluster.
+- apiGroups: [""]
+  resources: ["pods/log"]
+  verbs: ["get"]
 - apiGroups: ["batch"]
   resources: ["cronjobs"]
   verbs: ["get", "patch", "create", "delete"]
