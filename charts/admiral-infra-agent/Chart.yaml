@@ -29,5 +29,15 @@ annotations:
     - name: Support
       url: https://github.com/admiral-io/admiral-community
   artifacthub.io/changes: |
+    - kind: changed
+      description: Agent v0.2.1
     - kind: added
-      description: The first release, for agent v0.1.0
+      description: A component's input may reference another component's output, filled from the same job's plan or apply
+    - kind: changed
+      description: A failed component stops only the components that depend on it, and the rest still apply
+    - kind: fixed
+      description: A failed apply is reported as partial, with every component not reached listed as queued
+    - kind: fixed
+      description: An apply whose lease lapsed still reports what it did
+    - kind: fixed
+      description: Kubernetes client logs, such as leader election's, go through the agent's logger
