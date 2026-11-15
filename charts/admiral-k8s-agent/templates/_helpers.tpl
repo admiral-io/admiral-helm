@@ -105,6 +105,12 @@ RBAC rules for the ClusterRole, or for each Role when rbac.namespaces is set.
 - apiGroups: [""]
   resources: ["pods"]
   verbs: ["get", "list", "patch", "create", "delete", "watch"]
+# List lets a wait say which Warning events its objects and their pods had:
+# a readiness probe that fails, a mount that fails, a node that does not fit.
+# Without it the wait leaves events out and says so.
+- apiGroups: [""]
+  resources: ["events"]
+  verbs: ["list"]
 - apiGroups: ["batch"]
   resources: ["cronjobs"]
   verbs: ["get", "patch", "create", "delete"]
