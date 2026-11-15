@@ -29,13 +29,23 @@ annotations:
     - name: Support
       url: https://github.com/admiral-io/admiral-community
   artifacthub.io/changes: |
-    - kind: fixed
-      description: appVersion v0.4.3. An apply that creates a Job, or an object a webhook or the API server stamps with made-up values on each dry run, is no longer refused for a plan that changed
-    - kind: fixed
-      description: An update's and a takeover's plan count only the fields the apply changes, so a webhook's fresh stamp no longer refuses the apply
     - kind: changed
-      description: A custom resource is not healthy until its controller writes a status, when its CRD declares one, or while its Ready condition describes an earlier generation. admiral.io/health-check disabled opts any object out of the wait. The chart's RBAC already grants get on CRDs
+      description: Agent v0.6.0
     - kind: changed
-      description: Pruning leaves in place an object held by a finalizer that is not Kubernetes' own, unless it is annotated admiral.io/prune "true"
+      description: A component whose objects were all written but which did not become healthy is reported unhealthy, and Admiral no longer holds the environment for it. Stopping the health wait reports the same way
+    - kind: changed
+      description: A failed component stops only the components that depend on it, and the rest still apply
     - kind: added
-      description: The agent takes over the fields of Argo CD, Flux, Pulumi and Terraform, and --take-over-field-managers names more
+      description: The health wait ends at once on a failed Pod or Job, a Deployment past its progress deadline, or an image that does not exist, and keeps waiting on a missing Secret
+    - kind: added
+      description: While it waits, the job log shows restart counts, Warning events, and the last 20 lines a crashed container wrote. The chart grants list on events and get on pods/log; without either, the agent leaves that detail out
+    - kind: added
+      description: A plan names every Role and binding the agent may not create, in one pass
+    - kind: fixed
+      description: A hand-added kubectl annotate or label survives the next apply
+    - kind: fixed
+      description: The immutable-field check no longer matches on an object's name
+    - kind: fixed
+      description: Enrollment retries when it cannot reach Admiral, and stops only when Admiral refuses the key
+    - kind: fixed
+      description: An apply whose lease lapses finishes the write in hand and stops before the next object, and a lease lost during shutdown stops running jobs
