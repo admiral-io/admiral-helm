@@ -167,6 +167,62 @@ entries:
   - annotations:
       artifacthub.io/category: integration-delivery
       artifacthub.io/changes: |
+        - kind: changed
+          description: Agent v0.6.0
+        - kind: changed
+          description: A component whose objects were all written but which did not become healthy is reported unhealthy, and Admiral no longer holds the environment for it. Stopping the health wait reports the same way
+        - kind: changed
+          description: A failed component stops only the components that depend on it, and the rest still apply
+        - kind: added
+          description: The health wait ends at once on a failed Pod or Job, a Deployment past its progress deadline, or an image that does not exist, and keeps waiting on a missing Secret
+        - kind: added
+          description: While it waits, the job log shows restart counts, Warning events, and the last 20 lines a crashed container wrote. The chart grants list on events and get on pods/log; without either, the agent leaves that detail out
+        - kind: added
+          description: A plan names every Role and binding the agent may not create, in one pass
+        - kind: fixed
+          description: A hand-added kubectl annotate or label survives the next apply
+        - kind: fixed
+          description: The immutable-field check no longer matches on an object's name
+        - kind: fixed
+          description: Enrollment retries when it cannot reach Admiral, and stops only when Admiral refuses the key
+        - kind: fixed
+          description: An apply whose lease lapses finishes the write in hand and stops before the next object, and a lease lost during shutdown stops running jobs
+      artifacthub.io/displayName: Admiral Kubernetes Agent
+      artifacthub.io/license: Apache-2.0
+      artifacthub.io/links: |
+        - name: Documentation
+          url: https://admiral.io/docs?utm_source=artifacthub&utm_medium=referral&utm_campaign=admiral-k8s-agent
+        - name: Support
+          url: https://github.com/admiral-io/admiral-community
+    apiVersion: v2
+    appVersion: v0.6.0
+    created: "2026-11-15T03:35:33.953183109Z"
+    description: Runs an Admiral agent in Kubernetes over an outbound-only connection,
+      and plans and applies changes with server-side apply.
+    digest: 5df7592df4b17cde96f6ae516ed2703c17c9213a34a1a7bdf3e3605cffa24c7f
+    home: https://admiral.io
+    icon: https://raw.githubusercontent.com/admiral-io/admiral-helm/master/assets/admiral-icon.svg
+    keywords:
+    - admiral
+    - kubernetes
+    - agent
+    - deployment
+    - platform-engineering
+    - continuous-delivery
+    maintainers:
+    - email: support@admiral.io
+      name: Admiral Contributors
+      url: https://github.com/admiral-io/admiral-helm
+    name: admiral-k8s-agent
+    sources:
+    - https://github.com/admiral-io/admiral-helm
+    type: application
+    urls:
+    - https://github.com/admiral-io/admiral-helm/releases/download/admiral-k8s-agent-0.11.0/admiral-k8s-agent-0.11.0.tgz
+    version: 0.11.0
+  - annotations:
+      artifacthub.io/category: integration-delivery
+      artifacthub.io/changes: |
         - kind: fixed
           description: appVersion v0.4.3. An apply that creates a Job, or an object a webhook or the API server stamps with made-up values on each dry run, is no longer refused for a plan that changed
         - kind: fixed
@@ -785,4 +841,4 @@ entries:
     urls:
     - https://github.com/admiral-io/admiral-helm/releases/download/admiral-k8s-agent-0.5.0/admiral-k8s-agent-0.5.0.tgz
     version: 0.5.0
-generated: "2026-11-15T02:33:01.197633681Z"
+generated: "2026-11-15T03:35:33.953216739Z"
