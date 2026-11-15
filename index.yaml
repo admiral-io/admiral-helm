@@ -4,6 +4,54 @@ entries:
   - annotations:
       artifacthub.io/category: integration-delivery
       artifacthub.io/changes: |
+        - kind: changed
+          description: Agent v0.2.1
+        - kind: added
+          description: A component's input may reference another component's output, filled from the same job's plan or apply
+        - kind: changed
+          description: A failed component stops only the components that depend on it, and the rest still apply
+        - kind: fixed
+          description: A failed apply is reported as partial, with every component not reached listed as queued
+        - kind: fixed
+          description: An apply whose lease lapsed still reports what it did
+        - kind: fixed
+          description: Kubernetes client logs, such as leader election's, go through the agent's logger
+      artifacthub.io/displayName: Admiral Infra Agent
+      artifacthub.io/license: Apache-2.0
+      artifacthub.io/links: |
+        - name: Documentation
+          url: https://admiral.io/docs?utm_source=artifacthub&utm_medium=referral&utm_campaign=admiral-infra-agent
+        - name: Support
+          url: https://github.com/admiral-io/admiral-community
+    apiVersion: v2
+    appVersion: v0.2.1
+    created: "2026-11-15T01:49:45.723329802Z"
+    description: Runs an Admiral agent in Kubernetes that plans and applies Terraform
+      and OpenTofu components over an outbound-only connection.
+    digest: 4a973c383cbeb278c8864c6128d0c61f8d16f4b77a7cd999680cba613757f6cb
+    home: https://admiral.io
+    icon: https://raw.githubusercontent.com/admiral-io/admiral-helm/master/assets/admiral-icon.svg
+    keywords:
+    - admiral
+    - terraform
+    - opentofu
+    - agent
+    - infrastructure-as-code
+    - platform-engineering
+    maintainers:
+    - email: support@admiral.io
+      name: Admiral Contributors
+      url: https://github.com/admiral-io/admiral-helm
+    name: admiral-infra-agent
+    sources:
+    - https://github.com/admiral-io/admiral-helm
+    type: application
+    urls:
+    - https://github.com/admiral-io/admiral-helm/releases/download/admiral-infra-agent-0.2.0/admiral-infra-agent-0.2.0.tgz
+    version: 0.2.0
+  - annotations:
+      artifacthub.io/category: integration-delivery
+      artifacthub.io/changes: |
         - kind: added
           description: The first release, for agent v0.1.0
       artifacthub.io/displayName: Admiral Infra Agent
@@ -645,4 +693,4 @@ entries:
     urls:
     - https://github.com/admiral-io/admiral-helm/releases/download/admiral-k8s-agent-0.5.0/admiral-k8s-agent-0.5.0.tgz
     version: 0.5.0
-generated: "2026-11-01T01:02:52.098789013Z"
+generated: "2026-11-15T01:49:45.723341717Z"
