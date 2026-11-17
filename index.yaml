@@ -4,6 +4,47 @@ entries:
   - annotations:
       artifacthub.io/category: integration-delivery
       artifacthub.io/changes: |
+        - kind: added
+          description: Artifact Hub lists the agent image, which is public on GHCR
+      artifacthub.io/displayName: Admiral Infra Agent
+      artifacthub.io/images: |
+        - name: admiral-infra-agent
+          image: ghcr.io/admiral-io/admiral-infra-agent:v0.2.1
+      artifacthub.io/license: Apache-2.0
+      artifacthub.io/links: |
+        - name: Documentation
+          url: https://admiral.io/docs?utm_source=artifacthub&utm_medium=referral&utm_campaign=admiral-infra-agent
+        - name: Support
+          url: https://github.com/admiral-io/admiral-community
+    apiVersion: v2
+    appVersion: v0.2.1
+    created: "2026-11-17T15:31:57.098045183Z"
+    description: Runs an Admiral agent in Kubernetes that plans and applies Terraform
+      and OpenTofu components over an outbound-only connection.
+    digest: 5bbe7a7153ca3ca77019ac03316de02923cdb63852024d48851a86db72e36c4b
+    home: https://admiral.io
+    icon: https://raw.githubusercontent.com/admiral-io/admiral-helm/master/assets/admiral-icon.svg
+    keywords:
+    - admiral
+    - terraform
+    - opentofu
+    - agent
+    - infrastructure-as-code
+    - platform-engineering
+    maintainers:
+    - email: support@admiral.io
+      name: Admiral Contributors
+      url: https://github.com/admiral-io/admiral-helm
+    name: admiral-infra-agent
+    sources:
+    - https://github.com/admiral-io/admiral-helm
+    type: application
+    urls:
+    - https://github.com/admiral-io/admiral-helm/releases/download/admiral-infra-agent-0.2.1/admiral-infra-agent-0.2.1.tgz
+    version: 0.2.1
+  - annotations:
+      artifacthub.io/category: integration-delivery
+      artifacthub.io/changes: |
         - kind: changed
           description: Agent v0.2.1
         - kind: added
@@ -164,6 +205,47 @@ entries:
     - https://github.com/admiral-io/admiral-helm/releases/download/admiral-infra-agent-0.1.0/admiral-infra-agent-0.1.0.tgz
     version: 0.1.0
   admiral-k8s-agent:
+  - annotations:
+      artifacthub.io/category: integration-delivery
+      artifacthub.io/changes: |
+        - kind: added
+          description: Artifact Hub lists the agent image, which is public on GHCR
+      artifacthub.io/displayName: Admiral Kubernetes Agent
+      artifacthub.io/images: |
+        - name: admiral-k8s-agent
+          image: ghcr.io/admiral-io/admiral-k8s-agent:v0.6.0
+      artifacthub.io/license: Apache-2.0
+      artifacthub.io/links: |
+        - name: Documentation
+          url: https://admiral.io/docs?utm_source=artifacthub&utm_medium=referral&utm_campaign=admiral-k8s-agent
+        - name: Support
+          url: https://github.com/admiral-io/admiral-community
+    apiVersion: v2
+    appVersion: v0.6.0
+    created: "2026-11-17T15:31:57.364131142Z"
+    description: Runs an Admiral agent in Kubernetes over an outbound-only connection,
+      and plans and applies changes with server-side apply.
+    digest: 796c477e077b49073dbbc4de6e517f6f7675ac286ae81863a59a547f854dca11
+    home: https://admiral.io
+    icon: https://raw.githubusercontent.com/admiral-io/admiral-helm/master/assets/admiral-icon.svg
+    keywords:
+    - admiral
+    - kubernetes
+    - agent
+    - deployment
+    - platform-engineering
+    - continuous-delivery
+    maintainers:
+    - email: support@admiral.io
+      name: Admiral Contributors
+      url: https://github.com/admiral-io/admiral-helm
+    name: admiral-k8s-agent
+    sources:
+    - https://github.com/admiral-io/admiral-helm
+    type: application
+    urls:
+    - https://github.com/admiral-io/admiral-helm/releases/download/admiral-k8s-agent-0.11.1/admiral-k8s-agent-0.11.1.tgz
+    version: 0.11.1
   - annotations:
       artifacthub.io/category: integration-delivery
       artifacthub.io/changes: |
@@ -841,4 +923,4 @@ entries:
     urls:
     - https://github.com/admiral-io/admiral-helm/releases/download/admiral-k8s-agent-0.5.0/admiral-k8s-agent-0.5.0.tgz
     version: 0.5.0
-generated: "2026-11-15T03:35:33.953216739Z"
+generated: "2026-11-17T15:31:57.364181606Z"
